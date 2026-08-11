@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: #f4f6fb;
+  color: #1f2937;
+}
+
+@page {
+  size: A4;
+  margin: 12mm 14mm;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .student-copyright {
+    display: none !important;
+  }
+
+  html,
+  body {
+    height: auto;
+    background: white;
+  }
+
+  .print-page {
+    border: 0;
+    box-shadow: none;
+  }
+
+  .application-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
