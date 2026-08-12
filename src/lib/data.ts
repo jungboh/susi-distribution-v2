@@ -142,6 +142,19 @@ export async function getApplicationOwnerId(applicationId: string) {
   return data?.student_id as string | undefined;
 }
 
+export async function getApplicationById(applicationId: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
+    .from("susi_class2_applications")
+    .select("*")
+    .eq("id", applicationId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("지원 정보를 찾을 수 없습니다.");
+  return data as Application;
+}
+
 export async function ensureMinimumRows(studentId: string) {
   const supabaseAdmin = getSupabaseAdmin();
   const existing = await listApplications(studentId);

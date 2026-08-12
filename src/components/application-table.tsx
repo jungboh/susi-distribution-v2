@@ -14,6 +14,7 @@ import {
   deleteApplicationRowAction,
   updateApplicationFieldAction,
 } from "@/app/actions";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type FieldKey = Exclude<
   keyof Application,
@@ -54,17 +55,14 @@ const FIELDS: FieldConfig[] = [
   { key: "note", label: "비고", type: "text", placeholder: "자유 메모", wide: true },
 ];
 
-// 금융과 전용 컬럼. 다른 학급에는 표시하지 않는다.
-const FINANCE_FIELDS: FieldConfig[] = [
+const COMMON_ADDITIONAL_FIELDS: FieldConfig[] = [
   { key: "first_pass_cut", label: "전년합격컷", type: "text" },
   { key: "cut_70", label: "70%컷", type: "text" },
   { key: "additional_pass_cut", label: "최종컷", type: "text" },
-  { key: "remarks", label: "비고(금융)", type: "text", placeholder: "자유 메모", wide: true },
+  { key: "remarks", label: "추가 비고", type: "text", placeholder: "자유 메모", wide: true },
 ];
 
-function fieldsForClass(classCode: ClassCode): FieldConfig[] {
-  return classCode === "finance" ? [...FIELDS, ...FINANCE_FIELDS] : FIELDS;
-}
+const COMMON_FIELDS = [...FIELDS, ...COMMON_ADDITIONAL_FIELDS];
 
 function dday(dateStr: string | null) {
   if (!dateStr) return null;
@@ -83,7 +81,6 @@ function dday(dateStr: string | null) {
 
 export function ApplicationTable({
   studentId,
-  classCode,
   accessCode,
   initialApplications,
   fillViewport = false,
@@ -99,7 +96,7 @@ export function ApplicationTable({
   onApplicationDeleted?: (applicationId: string) => void;
 }) {
   const router = useRouter();
-  const fields = fieldsForClass(classCode);
+  const fields = COMMON_FIELDS;
   const [rows, setRows] = useState(initialApplications);
   const rowsRef = useRef(initialApplications);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +121,7 @@ export function ApplicationTable({
     setRows(next);
   }
 
-  function commit(id: string, key: FieldKey, value: string) {
+  function commit(id: string, seq: number, key: FieldKey, value: string) {
     setError(null);
     startTransition(async () => {
       try {
@@ -138,7 +135,7 @@ export function ApplicationTable({
           rowsRef.current.map((row) => (row.id === id ? updated : row))
         );
       } catch {
-        setError("저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        setError(`${seq}번 행을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.`);
       }
     });
   }
@@ -150,14 +147,16 @@ export function ApplicationTable({
         const row = await addApplicationRowAction(accessCode ?? null, studentId);
         commitRows([...rowsRef.current, row]);
         router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "대학을 추가하지 못했습니다.");
+      } catch {
+        setError("대학 행을 추가하지 못했습니다. 잠시 후 다시 시도해 주세요.");
       }
     });
   }
 
   function handleDeleteRow(id: string) {
-    if (!confirm("이 대학 정보를 삭제할까요?")) return;
+    const target = rowsRef.current.find((row) => row.id === id);
+    if (!confirm(`${target?.university_name || `${target?.seq ?? "선택한"}번 행`} 정보를 삭제할까요?`)) return;
+    setError(null);
     startTransition(async () => {
       try {
         await deleteApplicationRowAction(accessCode ?? null, id);
@@ -180,24 +179,28 @@ export function ApplicationTable({
     <div className={fillViewport ? "flex h-full flex-col" : undefined}>
       <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
         <span>
-          {filledCount}개 작성 중 (최소 {MIN_APPLICATION_ROWS}개 권장, 최대{" "}
+          지원대학 {filledCount}건 (작성란 최소 {MIN_APPLICATION_ROWS}개, 최대{" "}
           {MAX_APPLICATION_ROWS}개)
         </span>
-        {error && <span className="text-red-500">{error}</span>}
+        <span aria-live="polite">{isPending ? "변경사항 처리 중…" : ""}</span>
+        {error && <span role="alert" className="text-red-600">{error}</span>}
       </div>
 
       <div
-        className={`rounded-xl border border-slate-200 bg-white ${
+        className={`application-table-shell rounded-ui border border-line bg-white shadow-card ${
           fillViewport ? "min-h-0 flex-1 overflow-auto" : "overflow-x-auto"
         }`}
       >
-        <table className="w-full min-w-[1500px] border-collapse text-xs">
-          <thead className="sticky top-0 z-10 bg-slate-50">
+        {rows.length === 0 ? (
+          <EmptyState title="아직 입력된 지원대학이 없습니다" description="대학 추가 버튼으로 첫 지원대학 행을 만들 수 있습니다." />
+        ) : (
+        <table className="application-table w-full min-w-[2460px] border-separate border-spacing-0 text-xs">
+          <thead>
             <tr className="bg-slate-50 text-slate-600">
-              <Th rowSpan={2}>순</Th>
-              <Th rowSpan={2}>지역</Th>
-              <Th rowSpan={2}>지원대학</Th>
-              <Th rowSpan={2}>모집단위(학부,학과)</Th>
+              <Th rowSpan={2} sticky="seq">순</Th>
+              <Th rowSpan={2} sticky="region">지역</Th>
+              <Th rowSpan={2} sticky="university">지원대학</Th>
+              <Th rowSpan={2} sticky="department">모집단위(학부,학과)</Th>
               <Th colSpan={3}>전형개요</Th>
               <Th rowSpan={2}>수능 최저등급</Th>
               <Th rowSpan={2}>모집인원</Th>
@@ -211,14 +214,10 @@ export function ApplicationTable({
               <Th rowSpan={2}>나의내신</Th>
               <Th rowSpan={2}>전년평균</Th>
               <Th rowSpan={2}>비고</Th>
-              {classCode === "finance" && (
-                <>
-                  <Th rowSpan={2}>전년합격컷</Th>
-                  <Th rowSpan={2}>70%컷</Th>
-                  <Th rowSpan={2}>최종컷</Th>
-                  <Th rowSpan={2}>비고(금융)</Th>
-                </>
-              )}
+              <Th rowSpan={2}>전년합격컷</Th>
+              <Th rowSpan={2}>70%컷</Th>
+              <Th rowSpan={2}>최종컷</Th>
+              <Th rowSpan={2}>추가 비고</Th>
             </tr>
             <tr className="bg-slate-50 text-slate-500">
               <Th>전형유형</Th>
@@ -232,31 +231,33 @@ export function ApplicationTable({
                 key={row.id}
                 className={index % 2 === 0 ? "bg-white" : "bg-slate-50/50"}
               >
-                <td className="border border-slate-100 px-2 py-1.5 text-center align-top">
+                <td className="sticky-seq border-b border-r border-line bg-inherit px-2 py-1.5 text-center align-top">
                   <div className="flex items-center justify-center gap-1">
                     <button
                       type="button"
                       onClick={() => handleDeleteRow(row.id)}
-                      className="text-slate-400 hover:text-red-500"
-                      aria-label="행 삭제"
+                      disabled={isPending}
+                      className="inline-flex size-8 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:opacity-50"
+                      aria-label={`${row.seq}번 행 삭제`}
                     >
                       ×
                     </button>
                     <span>{row.seq}</span>
                   </div>
                 </td>
-                {fields.map((field) => (
+                {fields.map((field, fieldIndex) => (
                   <td
                     key={field.key}
-                    className="border border-slate-100 px-1 py-1 align-top"
+                    className={`${fieldIndex === 0 ? "sticky-region" : fieldIndex === 1 ? "sticky-university" : fieldIndex === 2 ? "sticky-department" : ""} border-b border-r border-line bg-inherit px-1 py-1 align-top focus-within:z-30`}
                   >
                     <FieldCell
                       value={(row[field.key] as string) ?? ""}
                       field={field}
+                      ariaLabel={`${row.seq}번 행 ${field.label}`}
                       onChangeLocal={(value) =>
                         updateLocal(row.id, field.key, value)
                       }
-                      onCommit={(value) => commit(row.id, field.key, value)}
+                      onCommit={(value) => commit(row.id, row.seq, field.key, value)}
                     />
                     {field.type === "date" &&
                       (() => {
@@ -273,6 +274,7 @@ export function ApplicationTable({
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
       <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
@@ -293,16 +295,19 @@ function Th({
   children,
   rowSpan,
   colSpan,
+  sticky,
 }: {
   children: React.ReactNode;
   rowSpan?: number;
   colSpan?: number;
+  sticky?: "seq" | "region" | "university" | "department";
 }) {
   return (
     <th
       rowSpan={rowSpan}
       colSpan={colSpan}
-      className="border border-slate-100 px-2 py-2 text-[11px] font-semibold whitespace-nowrap"
+      scope={colSpan ? "colgroup" : "col"}
+      className={`${sticky ? `sticky-${sticky}` : ""} border-b border-r border-line bg-slate-50 px-2 py-2 text-[11px] font-semibold whitespace-nowrap`}
     >
       {children}
     </th>
@@ -312,11 +317,13 @@ function Th({
 function FieldCell({
   value,
   field,
+  ariaLabel,
   onChangeLocal,
   onCommit,
 }: {
   value: string;
   field: FieldConfig;
+  ariaLabel: string;
   onChangeLocal: (value: string) => void;
   onCommit: (value: string) => void;
 }) {
@@ -328,12 +335,13 @@ function FieldCell({
 
     return (
       <select
+        aria-label={ariaLabel}
         value={value}
         onChange={(e) => {
           onChangeLocal(e.target.value);
           onCommit(e.target.value);
         }}
-        className="w-full min-w-[92px] rounded border-none bg-transparent px-1 py-1 text-xs outline-none focus:bg-blue-50"
+        className="min-h-9 w-full min-w-[92px] rounded border-none bg-transparent px-1 py-1 text-xs outline-none focus:bg-blue-50 focus:ring-2 focus:ring-brand/30"
       >
         <option value="">선택</option>
         {options.map((opt) => (
@@ -348,25 +356,27 @@ function FieldCell({
   if (field.type === "date") {
     return (
       <input
+        aria-label={ariaLabel}
         type="date"
         value={value}
         onChange={(e) => {
           onChangeLocal(e.target.value);
           onCommit(e.target.value);
         }}
-        className="w-full min-w-[124px] rounded border-none bg-transparent px-1 py-1 text-xs outline-none focus:bg-blue-50"
+        className="min-h-9 w-full min-w-[124px] rounded border-none bg-transparent px-1 py-1 text-xs outline-none focus:bg-blue-50 focus:ring-2 focus:ring-brand/30"
       />
     );
   }
 
   return (
     <input
+      aria-label={ariaLabel}
       type="text"
       value={value}
       placeholder={field.placeholder}
       onChange={(e) => onChangeLocal(e.target.value)}
       onBlur={(e) => onCommit(e.target.value)}
-      className={`w-full rounded border-none bg-transparent px-1 py-1 text-xs outline-none focus:bg-blue-50 ${
+      className={`min-h-9 w-full rounded border-none bg-transparent px-1 py-1 text-xs outline-none focus:bg-blue-50 focus:ring-2 focus:ring-brand/30 ${
         field.wide ? "min-w-[220px]" : "min-w-[96px]"
       }`}
     />

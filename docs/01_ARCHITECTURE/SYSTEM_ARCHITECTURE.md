@@ -28,4 +28,4 @@
 
 ## 배포
 
-통합 프로젝트의 지정 Production은 Netlify `susi-distribution.netlify.app`, 연결 대상 저장소/브랜치는 `jungboh/susi-distribution`의 `main`이다. 실제 Netlify 설정은 Task 003-A에서 조회하거나 변경하지 않았다.
+CURRENT 개발 기준은 `jungboh/susi-distribution-v2`의 `main`이다. v2 Netlify 후보 `susi-distribution-v2.netlify.app`은 공개 응답하지만 연결 저장소/branch/build 설정은 UNKNOWN이다. 이전 `susi-distribution.netlify.app`과 금융 전용 `susi2026.netlify.app`은 링크 호환성을 위해 ACTIVE_COMPATIBILITY로 보존한다.

@@ -14,14 +14,14 @@ export function PrintPageActions({ autoPrint }: { autoPrint: boolean }) {
       <button
         type="button"
         onClick={() => window.print()}
-        className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+        className="min-h-11 rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
       >
         인쇄 또는 PDF 저장
       </button>
       <button
         type="button"
         onClick={() => window.close()}
-        className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600"
+        className="min-h-11 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
       >
         닫기
       </button>

@@ -47,14 +47,14 @@ export function StudentExportActions({ studentId }: { studentId: string }) {
   }
 
   return (
-    <section className="mb-5 rounded-xl border border-slate-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-slate-700">학생 문서 내보내기</h2>
-      <div className="mt-3 flex flex-wrap gap-2">
+    <div className="rounded-ui border border-line bg-white p-4 shadow-card">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <a
           href={`${printHref}?auto=1&intent=pdf`}
           target="_blank"
           rel="noreferrer"
-          className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
+          aria-label="PDF 저장 화면 새 창으로 열기"
+          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
         >
           PDF 저장
         </a>
@@ -62,7 +62,7 @@ export function StudentExportActions({ studentId }: { studentId: string }) {
           type="button"
           onClick={downloadExcel}
           disabled={isExporting}
-          className="rounded-lg border border-brand px-4 py-2 text-xs font-semibold text-brand hover:bg-blue-50 disabled:cursor-wait disabled:opacity-60"
+          className="min-h-11 rounded-lg border border-brand px-4 py-2 text-sm font-semibold text-brand hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
         >
           {isExporting ? "엑셀 생성 중…" : "엑셀 저장"}
         </button>
@@ -70,9 +70,19 @@ export function StudentExportActions({ studentId }: { studentId: string }) {
           href={`${printHref}?auto=1&intent=print`}
           target="_blank"
           rel="noreferrer"
-          className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-600 hover:border-brand hover:text-brand"
+          aria-label="인쇄 화면 새 창으로 열기"
+          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
         >
           인쇄
+        </a>
+        <a
+          href={`${printHref}?mode=parent`}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="학부모 확인서 새 창으로 열기"
+          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+        >
+          학부모 확인서
         </a>
       </div>
       {error && (
@@ -80,6 +90,6 @@ export function StudentExportActions({ studentId }: { studentId: string }) {
           {error}
         </p>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CLASS_NAME_BY_CODE } from "@/lib/class-codes";
+import { CLASS_UI_NAME_BY_CODE } from "@/lib/class-codes";
 import { logServerError } from "@/lib/server-debug";
 import {
   getAuthorizedStudentExportData,
@@ -20,7 +20,7 @@ export async function GET(
   try {
     const workbook = await createStudentExportWorkbook(data);
     const buffer = await workbook.xlsx.writeBuffer();
-    const className = sanitizeFilenamePart(CLASS_NAME_BY_CODE[data.student.class_code]);
+    const className = sanitizeFilenamePart(CLASS_UI_NAME_BY_CODE[data.student.class_code]);
     const studentNumber = sanitizeFilenamePart(data.student.student_number ?? "번호없음");
     const studentName = sanitizeFilenamePart(data.student.name);
     const filename = `2026_수시지원서류_${className}_${studentNumber}_${studentName}.xlsx`;

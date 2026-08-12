@@ -11,7 +11,7 @@
 - `academic_year` 필드는 로컬 schema와 TypeScript 타입에서 확인되지 않았다.
 - 2026은 앱 제목, export 제목/파일명, footer 등에 하드코딩되어 있다.
 - applications와 checklist는 학생 UUID를 통해 연결되지만 별도 학년도 컬럼은 없다.
-- class_code 허용값은 세 학급으로 고정되어 있다.
+- v2 class_code 코드는 네 학급으로 확장됐고 migration 0010이 제약 확장을 정의한다. 단, 운영 적용은 UNKNOWN이다.
 
 ## UNKNOWN — 설계 전 확인 필요
 
@@ -28,5 +28,7 @@
 3. 전년도 read-only 보존과 신규 학년도 생성 흐름 설계
 4. 관리자 학년도 전환 및 기본 학년도 정책 설계
 5. 백업·롤백·링크 호환성 검증
+
+UI 구현 단계에서는 DB migration 없이 `CURRENT_ACADEMIC_YEAR = 2026` 같은 단일 config로 제목·footer·export 표시를 모으는 방안을 우선한다. 실제 데이터 분리를 위한 academic_year migration은 별도 승인 Task다.
 
 Task 003-A에서는 코드와 DB를 변경하지 않았다.

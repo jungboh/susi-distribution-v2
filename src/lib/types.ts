@@ -43,6 +43,28 @@ export type Application = {
   remarks: string;
   data_source: string;
   import_batch_id: string | null;
+  establishment_type: string | null;
+  result_2023_cut_50: string | null;
+  result_2023_cut_70: string | null;
+  result_2023_competition_rate: string | null;
+  result_2023_additional_admits: string | null;
+  result_2024_cut_50: string | null;
+  result_2024_cut_70: string | null;
+  result_2024_competition_rate: string | null;
+  result_2024_additional_admits: string | null;
+  result_2025_cut_50: string | null;
+  result_2025_cut_70: string | null;
+  result_2025_competition_rate: string | null;
+  result_2025_additional_admits: string | null;
+  result_2026_cut_50: string | null;
+  result_2026_cut_70: string | null;
+  result_2026_competition_rate: string | null;
+  result_2026_additional_admits: string | null;
+  apply_period_text: string | null;
+  document_submit_period_text: string | null;
+  stage1_announce_text: string | null;
+  interview_schedule_text: string | null;
+  final_announce_text: string | null;
   updated_at: string;
 };
 

@@ -2,6 +2,8 @@
 
 > **CONFIRMED 범위:** 로컬 `supabase/schema.sql`과 `supabase/migrations/*.sql` 기준. 실제 운영 DB는 조회하지 않았다.
 
+> **Task 003-B0:** `schema.sql` 본문은 3개 학급 기준이나 `0010_add_finance_class.sql`이 finance 제약, import batch 테이블과 finance 전용 application 컬럼을 추가한다. 상태는 **LOCAL MIGRATION ONLY**, 원격 적용은 UNKNOWN이다.
+
 ## 핵심 테이블
 
 ### `susi_class2_students`
@@ -38,6 +40,13 @@
 
 `academic_year` 컬럼은 로컬 schema와 타입에서 확인되지 않았다. 학년도 분리는 PLANNED이며 설계가 필요하다.
 
+## v2 Finance 확장
+
+- `susi_class2_import_batches` 이력 테이블
+- applications의 finance 전용 전형·합격선·점수·비고·source/import batch 필드
+- finance 교사 자격 증명 초기 행
+- 기존 학생/access_code/application/checklist를 직접 이전하거나 변경하는 SQL은 `0010`에 없음
+
 ## Migration 목록
 
 - `0002_checklist_application_id.sql`
@@ -48,5 +57,6 @@
 - `0007_reset_class_teacher_credentials.sql`
 - `0008_reset_distribution_teacher_credential.sql`
 - `0009_fix_distribution_teacher_credential_hash.sql`
+- `0010_add_finance_class.sql`
 
 어떤 migration이 운영 DB에 적용됐는지는 UNKNOWN이다.

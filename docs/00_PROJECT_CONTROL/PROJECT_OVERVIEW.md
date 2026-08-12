@@ -2,64 +2,63 @@
 
 SUSI Admissions Document Management System
 
-## 상태 범례
+## Status Legend
 
-- **CONFIRMED**: 코드, 로컬 SQL 또는 실제 환경에서 확인
-- **PLANNED**: 앞으로 구현 예정
-- **UNKNOWN**: 아직 확인하지 못함
-- **BLOCKED**: 문제로 확인 또는 진행 불가
-- **DEPRECATED**: 더 이상 사용하지 않음
+`CONFIRMED` 코드·Git·공개 응답에서 확인 / `PLANNED` 향후 작업 / `UNKNOWN` 외부 설정 확인 필요 / `BLOCKED` 진행 불가
 
 ## Purpose
 
-영동미래고 학생별 수시 지원 대학과 제출서류 체크리스트를 관리하고, 교사가 학급별 자료를 취합하며, 학생이 고유 링크로 자료를 작성하는 시스템이다.
+금융반, 창업반, 유통반, 보건반 학생의 수시 지원 대학과 제출서류를 하나의 시스템에서 학급별로 관리하고, 향후 여러 학년도에 반복 사용할 수 있도록 확장한다.
 
-## Current Production
+## Repository Classification — Task 003-B0
 
-- **CONFIRMED GitHub:** `https://github.com/jungboh/susi-distribution.git`
-- **CONFIRMED Netlify:** `https://susi-distribution.netlify.app`
+### CURRENT
 
-## Separate Finance Production
+- GitHub: `https://github.com/jungboh/susi-distribution-v2`
+- PROJECT_ROOT: `C:\Users\IIBI\Desktop\susi-integrated-work\susi-distribution-v2`
+- 근거: local/origin main 동기화, 4개 학급 코드, finance migration과 금융 기능 commit 확인
 
-- **CONFIRMED GitHub:** `https://github.com/jungboh/susi.git`
-- **CONFIRMED Netlify:** `https://susi2026.netlify.app`
-- 기존 금융과 시스템은 폐기·이전 대상이 아니며 독립적으로 계속 운영한다.
+### ACTIVE_COMPATIBILITY
+
+- 이전 통합 GitHub: `https://github.com/jungboh/susi-distribution`
+- 이전 통합 Netlify: `https://susi-distribution.netlify.app`
+- 금융 전용 GitHub: `https://github.com/jungboh/susi`
+- 금융 전용 Netlify: `https://susi2026.netlify.app`
+- 기존 학생 URL의 실제 도메인 분포를 확인하기 전에는 삭제·redirect·archive하지 않는다.
+
+### UNKNOWN
+
+- v2 Netlify `https://susi-distribution-v2.netlify.app`의 연결 Git 저장소, site ID, production branch와 build 설정
+- 운영 Supabase에 `0010_add_finance_class.sql`이 적용됐는지 여부
 
 ## Current Classes
 
-- **CONFIRMED:** `distribution` 유통반
-- **CONFIRMED:** `startup` 창업반
-- **CONFIRMED:** `health` 보건반
-
-## Planned Expansion
-
-- **PLANNED:** `finance` 금융반 추가. 아직 구현되지 않았다.
+- `finance` → 코드 표시명 `금융과` — **CONFIRMED**
+- `startup` → 창업반 — **CONFIRMED**
+- `distribution` → 유통반 — **CONFIRMED**
+- `health` → 보건반 — **CONFIRMED**
 
 ## Main Features
 
-- 학생별 수시 지원 대학 관리
-- 학생별 제출서류 체크리스트 및 비고 관리
-- 교사용 학급 선택, 학생 목록과 상세 관리
-- 학생 고유 링크를 통한 자료 작성
-- 교사용 Excel 내보내기와 인쇄 화면
+- `/apply/[code]` 학생 고유 링크와 지원대학/checklist 관리
+- 학급별 담임 인증, 최초 비밀번호 등록, session version 검증, 학급 잠금
+- 학생 목록·상세, 링크 복사, Excel 내보내기, 인쇄/PDF 저장
+- 현재 finance 조건부인 추가 필드·관심대학 PDF·입결통합 Excel 기능을 네 학급 공통 capability로 재설계 예정
+- 학부모 확인서 출력은 **MISSING / NEW COMMON**
+- 표 상단 header sticky는 **CONFIRMED**, 요구된 왼쪽 4열 sticky는 **MISSING**
 
 ## Technology
 
-Next.js 15 App Router, React 19, TypeScript, Tailwind CSS 3, Supabase JavaScript client, PostgreSQL/Supabase, ExcelJS, Netlify를 사용한다.
-
-## 주요 화면과 흐름
-
-- 학생: `/apply/[code]`에서 `access_code`로 학생을 조회하고 해당 학생 UUID에 연결된 지원 대학과 체크리스트를 표시·저장한다.
-- 교사: `/teacher`에서 학급을 선택하고 학급별 비밀번호로 인증한 뒤 학생 목록과 `/teacher/students/[id]` 상세를 관리한다.
-- `/`와 `/teacher/login`, `/teacher/change-password`는 현재 `/teacher`로 이동한다.
+Next.js 15 App Router, React 19, TypeScript, Tailwind CSS 3, Supabase/PostgreSQL, ExcelJS, `read-excel-file`, `pdfjs-dist`, Netlify.
 
 ## Critical Data Protection Rules
 
-- 기존 `/apply/[code]`, 학생 `access_code`, 학생 UUID, UUID와 `access_code`의 연결 관계, 기존 QR과 배포 URL을 변경하지 않는다.
-- 운영 DB 변경은 별도 승인과 사전 검증 없이는 수행하지 않는다.
-- 비밀값, 실제 access_code, 학생 개인정보를 문서나 Git에 기록하지 않는다.
-- 통합 저장소와 금융과 전용 저장소의 코드, 환경변수, Supabase 및 배포를 혼동하지 않는다.
+기존 `/apply/[code]`, access_code, student UUID, 상호 연결, QR, 배포 URL, applications와 checklist를 변경하지 않는다. v2 링크 복사는 `window.location.origin`을 사용하므로 현재 접속 도메인이 새 링크의 base domain이 된다. 기존 URL은 자동 전환하지 않는다.
 
-## Long-term Goal
+## Four-class Common Feature Policy
 
-2026년에 한정된 일회성 프로그램이 아니라 학년도별 데이터를 안전하게 구분하고 2027, 2028년 이후에도 반복 사용할 수 있는 시스템으로 확장한다. 구체적인 데이터·링크 정책은 아직 PLANNED 상태다.
+금융반에서 검증된 Excel/PDF/출력·추가 정보·Sticky UX와 신규 학부모 확인서·링크 관리 기능을 네 학급 공통으로 제공한다. 학급별 화면을 복제하지 않고 공통 component에 classCode/className을 전달한다. UI 기능은 같지만 모든 server query/action은 인증된 class_code로 데이터를 격리한다.
+
+## Academic Year
+
+2026은 제목, export와 footer에 하드코딩되어 있고 `academic_year`/`school_year` DB 구조는 확인되지 않았다. 다년도 구조는 PLANNED다.

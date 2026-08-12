@@ -1,7 +1,7 @@
 import "server-only";
 
 import ExcelJS from "exceljs";
-import { CLASS_NAME_BY_CODE } from "@/lib/class-codes";
+import { CLASS_UI_NAME_BY_CODE } from "@/lib/class-codes";
 import {
   EXPORT_DOCUMENT_TITLE,
   EXPORT_SCHOOL_NAME,
@@ -53,8 +53,7 @@ export async function createStudentExportWorkbook(data: StudentExportData) {
   workbook.created = new Date();
   workbook.modified = new Date();
 
-  const className = CLASS_NAME_BY_CODE[data.student.class_code];
-  const isFinance = data.student.class_code === "finance";
+  const className = CLASS_UI_NAME_BY_CODE[data.student.class_code];
   const generatedDate = formatGeneratedDate();
   const applications = getFilledApplications(data.applications);
 
@@ -103,14 +102,10 @@ export async function createStudentExportWorkbook(data: StudentExportData) {
     { header: "나의 내신", key: "grade", width: 12 },
     { header: "전년평균", key: "previousGrade", width: 12 },
     { header: "비고", key: "note", width: 28 },
-    ...(isFinance
-      ? [
-          { header: "전년합격컷", key: "firstPassCut", width: 12 },
-          { header: "70%컷", key: "cut70", width: 12 },
-          { header: "최종컷", key: "additionalPassCut", width: 12 },
-          { header: "비고(금융)", key: "remarks", width: 28 },
-        ]
-      : []),
+    { header: "전년합격컷", key: "firstPassCut", width: 14 },
+    { header: "70%컷", key: "cut70", width: 12 },
+    { header: "최종컷", key: "additionalPassCut", width: 12 },
+    { header: "추가 비고", key: "remarks", width: 28 },
   ];
   styleHeader(applicationSheet.getRow(1));
 
@@ -139,14 +134,10 @@ export async function createStudentExportWorkbook(data: StudentExportData) {
         grade: application.my_grade || "-",
         previousGrade: application.prev_avg_grade || "-",
         note: application.note || "-",
-        ...(isFinance
-          ? {
-              firstPassCut: application.first_pass_cut || "-",
-              cut70: application.cut_70 || "-",
-              additionalPassCut: application.additional_pass_cut || "-",
-              remarks: application.remarks || "-",
-            }
-          : {}),
+        firstPassCut: application.first_pass_cut || "-",
+        cut70: application.cut_70 || "-",
+        additionalPassCut: application.additional_pass_cut || "-",
+        remarks: application.remarks || "-",
       });
     }
   }
@@ -154,7 +145,7 @@ export async function createStudentExportWorkbook(data: StudentExportData) {
     applicationSheet.getColumn(column).numFmt = "yyyy-mm-dd";
   }
   styleBody(applicationSheet, 2, applicationSheet.rowCount);
-  applicationSheet.autoFilter = { from: "A1", to: isFinance ? "W1" : "S1" };
+  applicationSheet.autoFilter = { from: "A1", to: "W1" };
 
   const checklistSheet = workbook.addWorksheet("제출서류", {
     views: [{ state: "frozen", ySplit: 1, showGridLines: false }],

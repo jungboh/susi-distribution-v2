@@ -1,8 +1,8 @@
 import type { Application, ChecklistItem, Student } from "@/lib/types";
 
 export const EXPORT_SCHOOL_YEAR = 2026;
-export const EXPORT_SCHOOL_NAME = "영동미래고";
-export const EXPORT_DOCUMENT_TITLE = "2026년 영동미래고 수시지원서류 취합";
+export const EXPORT_SCHOOL_NAME = "영동미래고등학교";
+export const EXPORT_DOCUMENT_TITLE = "2026학년도 수시 지원 현황";
 
 export type StudentExportData = {
   student: Student;

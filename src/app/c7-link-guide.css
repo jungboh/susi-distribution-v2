@@ -1,0 +1,31 @@
+
+/* Task 003-C7: student/parent access guide. Kept separate from parent confirmation styles. */
+.link-guide-stack { display: grid; gap: 24px; }
+.link-guide-page { box-sizing: border-box; width: min(210mm, calc(100% - 32px)); min-height: 297mm; margin: 0 auto; padding: 15mm 16mm 13mm; background: #fff; color: #172033; display: flex; flex-direction: column; box-shadow: 0 12px 30px rgb(15 23 42 / 10%); page: link-guide-page; }
+.link-guide-header { text-align: center; border-bottom: 2px solid #123b6d; padding-bottom: 8mm; }
+.link-guide-header p { margin: 0; font-size: 12px; font-weight: 700; color: #526071; }
+.link-guide-header h1 { margin: 3mm 0; color: #0b2b55; font-size: 25px; line-height: 1.3; }
+.link-guide-student { display: grid; grid-template-columns: 1fr 1fr; margin-top: 8mm; border: 1px solid #cbd5e1; }
+.link-guide-student div { display: grid; grid-template-columns: 28mm 1fr; min-height: 14mm; align-items: center; }
+.link-guide-student div + div { border-left: 1px solid #cbd5e1; }
+.link-guide-student span { align-self: stretch; display: grid; place-items: center; background: #f1f5f9; font-size: 12px; font-weight: 700; }
+.link-guide-student strong { padding: 0 5mm; font-size: 15px; }
+.link-guide-instructions { margin-top: 12mm; padding: 7mm; border: 1px solid #dbe4ee; }
+.link-guide-page h2 { margin: 0 0 3mm; color: #0b2b55; font-size: 16px; }
+.link-guide-instructions ol, .link-guide-notice ul { margin: 0; padding-left: 5mm; font-size: 13px; line-height: 1.75; }
+.link-guide-url { margin-top: 8mm; padding: 5mm; border-radius: 3mm; background: #f1f5f9; }
+.link-guide-url p { margin: 0; overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; color: #123b6d; }
+.link-guide-notice { margin-top: 8mm; padding: 5mm; border: 1px solid #dbe4ee; }
+.link-guide-page footer { margin-top: auto; padding-top: 8mm; text-align: center; font-size: 15px; font-weight: 800; color: #0b2b55; }
+@page link-guide-page { size: A4 portrait; margin: 0; }
+@media print {
+  .link-guide-screen { padding: 0 !important; background: #fff !important; }
+  .link-guide-stack { display: block; }
+  .link-guide-page { width: 210mm; height: 297mm; min-height: 297mm; margin: 0; box-shadow: none; break-after: page; page-break-after: always; overflow: hidden; }
+  .link-guide-page:last-child { break-after: auto; page-break-after: auto; }
+}
+@media (max-width: 640px) {
+  .link-guide-page { padding: 8mm; }
+  .link-guide-student { grid-template-columns: 1fr; }
+  .link-guide-student div + div { border-left: 0; border-top: 1px solid #cbd5e1; }
+}

@@ -36,6 +36,31 @@ const APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
   "remarks",
 ]);
 
+const TEACHER_ONLY_APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
+  "establishment_type",
+  "result_2023_cut_50",
+  "result_2023_cut_70",
+  "result_2023_competition_rate",
+  "result_2023_additional_admits",
+  "result_2024_cut_50",
+  "result_2024_cut_70",
+  "result_2024_competition_rate",
+  "result_2024_additional_admits",
+  "result_2025_cut_50",
+  "result_2025_cut_70",
+  "result_2025_competition_rate",
+  "result_2025_additional_admits",
+  "result_2026_cut_50",
+  "result_2026_cut_70",
+  "result_2026_competition_rate",
+  "result_2026_additional_admits",
+  "apply_period_text",
+  "document_submit_period_text",
+  "stage1_announce_text",
+  "interview_schedule_text",
+  "final_announce_text",
+]);
+
 const NULLABLE_DATE_FIELDS = new Set<keyof ApplicationPatch>([
   "apply_start_date",
   "document_submit_date",
@@ -129,15 +154,25 @@ export async function updateApplicationFieldAction(
   accessCode: string | null,
   applicationId: string,
   field: keyof ApplicationPatch,
-  value: string | null
+  value: string | null | undefined
 ) {
-  if (!APPLICATION_FIELD_NAMES.has(field)) {
+  const isCommonField = APPLICATION_FIELD_NAMES.has(field);
+  const isTeacherOnlyField = TEACHER_ONLY_APPLICATION_FIELD_NAMES.has(field);
+  if (!isCommonField && !isTeacherOnlyField) {
+    throw new Error("허용되지 않은 필드입니다.");
+  }
+  if (accessCode && isTeacherOnlyField) {
     throw new Error("허용되지 않은 필드입니다.");
   }
   await authorizeApplication(accessCode, applicationId);
-  const normalizedValue = NULLABLE_DATE_FIELDS.has(field)
-    ? value?.trim() || null
-    : value ?? "";
+  if (value === undefined) {
+    return data.getApplicationById(applicationId);
+  }
+  const normalizedValue = isTeacherOnlyField
+    ? value === null || value.trim() === "" ? null : value
+    : NULLABLE_DATE_FIELDS.has(field)
+      ? value?.trim() || null
+      : value ?? "";
   const application = await data.updateApplication(applicationId, {
     [field]: normalizedValue,
   } as ApplicationPatch);

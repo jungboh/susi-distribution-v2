@@ -11,6 +11,20 @@ export const CLASS_NAME_BY_CODE: Record<ClassCode, string> = {
   finance: "금융과",
 };
 
+export const CLASS_UI_NAME_BY_CODE: Record<ClassCode, string> = {
+  finance: "금융반",
+  startup: "창업반",
+  distribution: "유통반",
+  health: "보건반",
+};
+
+export const LANDING_CLASS_CODES: readonly ClassCode[] = [
+  "finance",
+  "startup",
+  "distribution",
+  "health",
+];
+
 const CLASS_DESCRIPTION_BY_CODE: Record<ClassCode, string> = {
   distribution: "유통반 학생 관리",
   startup: "창업반 학생 관리",

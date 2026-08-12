@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createStudentAction } from "@/app/actions";
 import type { ClassCode } from "@/lib/class-codes";
@@ -21,35 +21,39 @@ export function AddStudentForm({ classCode }: { classCode: ClassCode }) {
     <form
       ref={formRef}
       action={formAction}
-      className="flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-slate-300 bg-white p-3"
+      className="grid gap-3 rounded-ui border border-dashed border-slate-300 bg-white p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
     >
       <input type="hidden" name="class_code" value={classCode} />
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-slate-500">이름</label>
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <label htmlFor="new-student-name" className="text-xs font-semibold text-slate-600">이름</label>
         <input
+          id="new-student-name"
           name="name"
           required
           placeholder="홍길동"
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-brand"
+          disabled={pending}
+          className="min-h-11 min-w-0 rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-slate-100"
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-slate-500">학번(선택)</label>
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <label htmlFor="new-student-number" className="text-xs font-semibold text-slate-600">학번(선택)</label>
         <input
+          id="new-student-number"
           name="student_number"
           placeholder="10203"
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-brand"
+          disabled={pending}
+          className="min-h-11 min-w-0 rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-slate-100"
         />
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60"
+        className="min-h-11 rounded-lg bg-navy px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? "추가 중..." : "학생 추가"}
       </button>
       {state?.error && (
-        <p className="w-full text-xs text-red-500">{state.error}</p>
+        <p role="alert" className="text-xs text-red-600 sm:col-span-3">{state.error}</p>
       )}
     </form>
   );

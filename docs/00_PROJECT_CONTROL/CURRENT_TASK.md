@@ -1,16 +1,18 @@
-# Current Task
+# CURRENT TASK
 
-- **Task:** 003-A-DOC
-- **Title:** 프로젝트 위치 확인 및 문서화 Bootstrap
-- **Purpose:** 현재 실제 작업 프로젝트를 확인하고 장기 운영 문서 체계를 구축한다.
-- **Allowed:** `docs/**` 생성 및 보완
-- **Forbidden:** `src` 수정, DB/Supabase/migration 변경, commit, push, deploy
-- **Start:** 실제 Desktop과 `susi-integrated-work`가 존재했고 올바른 통합 저장소에서 미추적 `docs/`만 확인됐다.
-- **Work:** 실제 PROJECT_ROOT, remote, branch, 기존 변경, 구조와 코드를 확인하고 기존 문서 내용을 보존해 공식 명칭과 인수인계 체계를 보완했다.
-- **Changed Files:** `docs/` 아래 Markdown 문서만
-- **Verification:** typecheck PASS, lint PASS, build PASS, `git diff --check` PASS, UTF-8 및 secret 검사 PASS
-- **Status:** DONE
-- **Next:** PM 승인 후 결정
-- **Blocker:** 없음
-
-애플리케이션 코드, package 파일, Supabase 파일, DB, 학생 식별자, 배포는 변경하지 않았다. Commit과 push도 수행하지 않았다.
+- **Task:** 003-C7A — QR Removal + Student URL Policy Simplification
+- **Status:** READY FOR PM REVIEW
+- **Scope:** QR 기능 전체 제거, 텍스트 링크 중심 링크 관리·복사 fallback·학급 Excel·A4 접속 안내문 유지
+- **Student URL source:** `STUDENT_LINK_ORIGIN = https://susi-distribution-v2.netlify.app`
+- **Evidence:** 저장소 `CLAUDE.md`와 `docs/02_OPERATIONS/NETLIFY_DEPLOY.md`에 현재 v2 배포 URL로 명시된 기존 설정
+- **Consistency:** 복사·Excel 표시/target·안내문이 모두 `buildStudentUrl(accessCode)` 사용
+- **Encoding:** access_code는 helper에서 `encodeURIComponent`를 정확히 한 번 적용
+- **Isolation:** Teacher session과 요청 class 일치 후 서버에서 해당 class_code만 조회
+- **QR:** PM 정책 변경으로 제거. 코드, UI, 안내문, CSS, type, dependency, QA 항목 없음
+- **Excel/Print 필수 유지:** 인증 학급 전체 링크 Excel의 6개 열과 hyperlink, 안내문 route, 학생정보·텍스트 URL, 학생별 A4 Portrait, 브라우저 Print, print CSS, 마지막 빈 페이지 방지를 삭제·축소하지 않는다.
+- **Guide layout:** QR가 있던 공간은 접속 절차와 줄바꿈 가능한 텍스트 URL의 가독성을 높이는 데 사용한다.
+- **DB / Migration / Environment / Netlify:** 변경 없음
+- **Protected:** C6 학부모 확인서 파일·버튼·`mode=parent`·문구·서명·A4 CSS 무변경
+- **Protected C6 outputs:** 기존 학생별 Excel·PDF·Print route와 동작을 유지한다.
+- **Remote QA:** 실제 로그인, Clipboard, Excel, A4 안내문, viewport 검증은 미실행
+- **Stop:** Commit/Push/Deploy 및 다음 Task 자동 착수 없이 PM 검토 대기
