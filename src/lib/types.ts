@@ -31,6 +31,18 @@ export type Application = {
   my_grade: string;
   prev_avg_grade: string;
   note: string;
+  // 금융과 전용 필드. 다른 학급에서는 항상 빈 문자열/기본값이다.
+  major_series: string;
+  stage1_elements: string;
+  season: string;
+  selection_type: string;
+  first_pass_cut: string;
+  cut_70: string;
+  additional_pass_cut: string;
+  my_score: string;
+  remarks: string;
+  data_source: string;
+  import_batch_id: string | null;
   updated_at: string;
 };
 
@@ -58,4 +70,5 @@ export const ADMISSION_TYPES = [
 ] as const;
 
 export const MIN_APPLICATION_ROWS = 6;
-export const MAX_APPLICATION_ROWS = 15;
+// 금융과는 기존 시스템에서 학생당 최대 50개 지원 행을 허용했다.
+export const MAX_APPLICATION_ROWS = 50;

@@ -25,6 +25,15 @@ const APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
   "my_grade",
   "prev_avg_grade",
   "note",
+  "major_series",
+  "stage1_elements",
+  "season",
+  "selection_type",
+  "first_pass_cut",
+  "cut_70",
+  "additional_pass_cut",
+  "my_score",
+  "remarks",
 ]);
 
 const NULLABLE_DATE_FIELDS = new Set<keyof ApplicationPatch>([

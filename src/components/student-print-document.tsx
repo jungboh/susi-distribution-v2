@@ -13,6 +13,7 @@ import {
 export function StudentPrintDocument({ data }: { data: StudentExportData }) {
   const applications = getFilledApplications(data.applications);
   const className = CLASS_NAME_BY_CODE[data.student.class_code];
+  const isFinance = data.student.class_code === "finance";
 
   return (
     <article className="print-page mx-auto max-w-[210mm] bg-white p-6 text-slate-800 shadow-sm print:max-w-none print:p-0 print:shadow-none">
@@ -48,6 +49,12 @@ export function StudentPrintDocument({ data }: { data: StudentExportData }) {
                   <PrintTh>면접일</PrintTh>
                   <PrintTh>최종발표일</PrintTh>
                   <PrintTh>비고</PrintTh>
+                  {isFinance && (
+                    <>
+                      <PrintTh>전년합격컷 / 70%컷 / 최종컷</PrintTh>
+                      <PrintTh>비고(금융)</PrintTh>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -69,6 +76,22 @@ export function StudentPrintDocument({ data }: { data: StudentExportData }) {
                     <PrintTd>{formatExportDate(application.interview_date)}</PrintTd>
                     <PrintTd>{formatExportDate(application.final_announce_date)}</PrintTd>
                     <PrintTd>{displayValue(application.note)}</PrintTd>
+                    {isFinance && (
+                      <>
+                        <PrintTd>
+                          {displayValue(
+                            [
+                              application.first_pass_cut,
+                              application.cut_70,
+                              application.additional_pass_cut,
+                            ]
+                              .filter((v) => v.trim())
+                              .join(" / ")
+                          )}
+                        </PrintTd>
+                        <PrintTd>{displayValue(application.remarks)}</PrintTd>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>

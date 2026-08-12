@@ -9,6 +9,8 @@ import { ApplicationTable } from "@/components/application-table";
 import { ChecklistPanel } from "@/components/checklist-panel";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { StudentExportActions } from "@/components/student-export-actions";
+import { AdmissionExcelImport } from "@/components/admission-excel-import";
+import { InterestPdfImport } from "@/components/interest-pdf-import";
 import { AppFooter } from "@/components/app-footer";
 import { CLASS_NAME_BY_CODE } from "@/lib/class-codes";
 import { requireTeacherClassSession } from "@/lib/teacher-auth";
@@ -73,9 +75,17 @@ export default async function TeacherStudentDetailPage({
 
         <StudentExportActions studentId={student.id} />
 
+        {student.class_code === "finance" && (
+          <>
+            <AdmissionExcelImport />
+            <InterestPdfImport />
+          </>
+        )}
+
         <div className="mb-6">
           <ApplicationTable
             studentId={student.id}
+            classCode={student.class_code}
             initialApplications={applications}
           />
         </div>

@@ -8,6 +8,7 @@ import {
   MAX_APPLICATION_ROWS,
   MIN_APPLICATION_ROWS,
 } from "@/lib/types";
+import type { ClassCode } from "@/lib/class-codes";
 import {
   addApplicationRowAction,
   deleteApplicationRowAction,
@@ -53,6 +54,18 @@ const FIELDS: FieldConfig[] = [
   { key: "note", label: "비고", type: "text", placeholder: "자유 메모", wide: true },
 ];
 
+// 금융과 전용 컬럼. 다른 학급에는 표시하지 않는다.
+const FINANCE_FIELDS: FieldConfig[] = [
+  { key: "first_pass_cut", label: "전년합격컷", type: "text" },
+  { key: "cut_70", label: "70%컷", type: "text" },
+  { key: "additional_pass_cut", label: "최종컷", type: "text" },
+  { key: "remarks", label: "비고(금융)", type: "text", placeholder: "자유 메모", wide: true },
+];
+
+function fieldsForClass(classCode: ClassCode): FieldConfig[] {
+  return classCode === "finance" ? [...FIELDS, ...FINANCE_FIELDS] : FIELDS;
+}
+
 function dday(dateStr: string | null) {
   if (!dateStr) return null;
   const today = new Date();
@@ -70,6 +83,7 @@ function dday(dateStr: string | null) {
 
 export function ApplicationTable({
   studentId,
+  classCode,
   accessCode,
   initialApplications,
   fillViewport = false,
@@ -77,6 +91,7 @@ export function ApplicationTable({
   onApplicationDeleted,
 }: {
   studentId: string;
+  classCode: ClassCode;
   accessCode?: string;
   initialApplications: Application[];
   fillViewport?: boolean;
@@ -84,6 +99,7 @@ export function ApplicationTable({
   onApplicationDeleted?: (applicationId: string) => void;
 }) {
   const router = useRouter();
+  const fields = fieldsForClass(classCode);
   const [rows, setRows] = useState(initialApplications);
   const rowsRef = useRef(initialApplications);
   const [error, setError] = useState<string | null>(null);
@@ -195,6 +211,14 @@ export function ApplicationTable({
               <Th rowSpan={2}>나의내신</Th>
               <Th rowSpan={2}>전년평균</Th>
               <Th rowSpan={2}>비고</Th>
+              {classCode === "finance" && (
+                <>
+                  <Th rowSpan={2}>전년합격컷</Th>
+                  <Th rowSpan={2}>70%컷</Th>
+                  <Th rowSpan={2}>최종컷</Th>
+                  <Th rowSpan={2}>비고(금융)</Th>
+                </>
+              )}
             </tr>
             <tr className="bg-slate-50 text-slate-500">
               <Th>전형유형</Th>
@@ -221,7 +245,7 @@ export function ApplicationTable({
                     <span>{row.seq}</span>
                   </div>
                 </td>
-                {FIELDS.map((field) => (
+                {fields.map((field) => (
                   <td
                     key={field.key}
                     className="border border-slate-100 px-1 py-1 align-top"

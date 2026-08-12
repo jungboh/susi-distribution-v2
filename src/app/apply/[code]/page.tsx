@@ -64,6 +64,7 @@ export default async function ApplyPage({
 
         <StudentApplicationWorkspace
           studentId={student.id}
+          classCode={student.class_code}
           accessCode={code}
           initialApplications={applications}
           initialChecklist={checklist}
