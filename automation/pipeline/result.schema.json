@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Codex pipeline completion result",
+  "type": "object",
+  "properties": {
+    "status": { "enum": ["READY FOR PM REVIEW", "BLOCKED"] },
+    "summary": { "type": "string", "minLength": 1 },
+    "files_changed": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["PASS", "FAIL", "BLOCKED", "NOT RUN"] },
+          "details": { "type": "string" }
+        },
+        "required": ["command", "status", "details"],
+        "additionalProperties": false
+      }
+    },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "required": ["status", "summary", "files_changed", "validation", "risks", "next_action"],
+  "additionalProperties": false
+}

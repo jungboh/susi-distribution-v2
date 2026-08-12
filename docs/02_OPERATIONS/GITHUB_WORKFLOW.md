@@ -23,3 +23,9 @@ git rev-list --left-right --count HEAD...origin/main
 `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check`, `git status --short`를 실행한다. 환경변수, service role key, 실제 access_code와 개인정보를 commit하지 않는다.
 
 Commit/Push는 PM 승인 후 수행하며 force push, remote 변경, 무단 branch 변경을 금지한다.
+
+## 반자동 파이프라인
+
+`Task PIPELINE-001` 이후의 Issue 기반 반자동 실행 절차는
+[`SEMI_AUTOMATED_PIPELINE.md`](./SEMI_AUTOMATED_PIPELINE.md)를 따른다.
+기본 실행은 `DryRun`이며 Commit·Push·Draft PR은 별도 게시 승인이 있을 때만 수행한다.

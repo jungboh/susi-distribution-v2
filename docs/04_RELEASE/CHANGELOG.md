@@ -1,5 +1,15 @@
 # Changelog
 
+## Task PIPELINE-001 — 2026-08-12
+
+- PM 작업지를 위한 GitHub Issue 템플릿과 Draft PR 검토 게이트 추가
+- `DryRun` 기본 PowerShell 파이프라인과 실제 프로젝트·origin·clean main·원격 동기화 사전검증 구현
+- `codex exec --ephemeral --sandbox workspace-write` 및 JSON Schema 구조화 결과 계약 구현
+- Execute 이후 typecheck, lint, build, whitespace 이중 검증 구현
+- 명시적인 게시 승인 시에만 선택적 Stage·Commit·Push·Draft PR을 수행하도록 분리
+- GitHub PR quality workflow와 Netlify Preview 이후 PM·사용자 Merge 게이트 문서화
+- Merge, Deploy, 원격 DB, 다음 Task 자동 실행 없음
+
 ## Task 003-C6 — 2026-08-12
 
 - 기존 학생별 Excel·PDF intent·Print intent route 유지
