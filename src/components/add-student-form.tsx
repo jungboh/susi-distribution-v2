@@ -1,18 +1,21 @@
 "use client";
 
 import { useActionState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createStudentAction } from "@/app/actions";
 import type { ClassCode } from "@/lib/class-codes";
 
 export function AddStudentForm({ classCode }: { classCode: ClassCode }) {
   const [state, formAction, pending] = useActionState(createStudentAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (state?.error === "") {
       formRef.current?.reset();
+      router.refresh();
     }
-  }, [state]);
+  }, [state, router]);
 
   return (
     <form
