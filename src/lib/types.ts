@@ -83,6 +83,16 @@ export type ChecklistItem = {
   updated_at: string;
 };
 
+export type StudentStatus = "not_started" | "in_progress" | "done";
+
+// 표시 전용 파생 상태다: 지원대학 0건이면 미작성, 체크리스트가 있고 전체 제출 완료면 완료, 나머지는 진행중.
+// 서버에 별도로 저장되지 않으며 DB의 "공식 완료" 플래그가 아니다.
+export const STUDENT_STATUS_LABEL: Record<StudentStatus, string> = {
+  not_started: "미작성",
+  in_progress: "진행중",
+  done: "완료",
+};
+
 export const ADMISSION_TYPES = [
   "학생부교과",
   "학생부종합",

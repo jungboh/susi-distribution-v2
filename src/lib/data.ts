@@ -11,6 +11,7 @@ import {
   MAX_APPLICATION_ROWS,
   MIN_APPLICATION_ROWS,
   Student,
+  StudentStatus,
 } from "@/lib/types";
 
 function getSupabaseAdmin() {
@@ -240,7 +241,18 @@ export async function getStudentStats(studentId: string) {
   const filledCount = apps.filter((a) => a.university_name.trim()).length;
   const checklistTotal = checklist.length;
   const checklistDone = checklist.filter((c) => c.is_submitted).length;
-  return { filledCount, checklistTotal, checklistDone };
+
+  const status: StudentStatus =
+    filledCount === 0
+      ? "not_started"
+      : checklistTotal > 0 && checklistDone === checklistTotal
+        ? "done"
+        : "in_progress";
+
+  const timestamps = [...apps.map((a) => a.updated_at), ...checklist.map((c) => c.updated_at)].filter(Boolean);
+  const lastModifiedAt = timestamps.length > 0 ? timestamps.reduce((latest, ts) => (ts > latest ? ts : latest)) : null;
+
+  return { filledCount, checklistTotal, checklistDone, status, lastModifiedAt };
 }
 
 export async function listStudentsWithStats(

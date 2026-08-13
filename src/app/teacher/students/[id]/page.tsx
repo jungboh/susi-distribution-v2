@@ -7,6 +7,7 @@ import { ConsultationApplicationsPanel } from "@/components/consultation";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { InterestPdfImport } from "@/components/interest-pdf-import";
 import { StudentExportActions } from "@/components/student-export-actions";
+import { StudentDetailTabs } from "@/components/teacher/student-detail-tabs";
 import { TeacherAppShell } from "@/components/teacher/teacher-app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageContainer, PageHeader, PageSection } from "@/components/ui/page-layout";
@@ -49,8 +50,10 @@ export default async function TeacherStudentDetailPage({ params, searchParams }:
         </div>
         <PageSection title="문서 내보내기" description="기존 Excel·PDF·인쇄 기능을 사용합니다."><StudentExportActions studentId={student.id} /></PageSection>
         {classCode === "finance" && <PageSection title="데이터 가져오기" description="기존 금융반 가져오기 기능을 유지합니다."><AdmissionExcelImport /><InterestPdfImport /></PageSection>}
-        <ConsultationApplicationsPanel student={student} studentId={student.id} classCode={classCode} className={className} initialApplications={applications} />
-        <PageSection title="제출서류"><ChecklistPanel applications={applications} initialItems={checklist} /></PageSection>
+        <StudentDetailTabs
+          applicationsPanel={<ConsultationApplicationsPanel student={student} studentId={student.id} classCode={classCode} className={className} initialApplications={applications} />}
+          checklistPanel={<PageSection title="제출서류"><ChecklistPanel applications={applications} initialItems={checklist} /></PageSection>}
+        />
       </PageContainer>
     </TeacherAppShell>
   );
