@@ -21,7 +21,7 @@ function resolveView(value?: string): TeacherView {
   return "dashboard";
 }
 
-export default async function TeacherPage({ searchParams }: { searchParams: Promise<{ class?: string; q?: string; view?: string }> }) {
+export default async function TeacherPage({ searchParams }: { searchParams: Promise<{ class?: string; q?: string; view?: string; status?: string; page?: string }> }) {
   const params = await searchParams;
   const rawClassCode = params.class;
   if (!rawClassCode || !isClassCode(rawClassCode)) redirect("/");
@@ -53,11 +53,11 @@ export default async function TeacherPage({ searchParams }: { searchParams: Prom
 
     if (view === "students" && params.q?.trim()) {
       const [students, allStudents] = await Promise.all([listStudentsWithStats(classCode, params.q), listStudentsWithStats(classCode)]);
-      return <TeacherAppShell classCode={classCode} view={view} title={title}><StudentManagement classCode={classCode} students={students} totalCount={allStudents.length} query={params.q} /></TeacherAppShell>;
+      return <TeacherAppShell classCode={classCode} view={view} title={title}><StudentManagement classCode={classCode} students={students} totalCount={allStudents.length} query={params.q} status={params.status} page={params.page} /></TeacherAppShell>;
     }
 
     const students = await listStudentsWithStats(classCode);
-    return <TeacherAppShell classCode={classCode} view={view} title={title}>{view === "dashboard" ? <TeacherDashboard classCode={classCode} students={students} /> : <StudentManagement classCode={classCode} students={students} totalCount={students.length} query={params.q} />}</TeacherAppShell>;
+    return <TeacherAppShell classCode={classCode} view={view} title={title}>{view === "dashboard" ? <TeacherDashboard classCode={classCode} students={students} /> : <StudentManagement classCode={classCode} students={students} totalCount={students.length} query={params.q} status={params.status} page={params.page} />}</TeacherAppShell>;
   } catch (error) {
     logServerError("page.teacher.list-students", error);
     return <TeacherAppShell classCode={classCode} view={view} title={title}><PageContainer><EmptyState title="학생 정보를 불러오지 못했습니다." description="잠시 후 다시 시도해 주세요." /></PageContainer></TeacherAppShell>;

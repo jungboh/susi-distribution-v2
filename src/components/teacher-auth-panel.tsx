@@ -67,7 +67,6 @@ export function TeacherAuthPanel({ classCode }: { classCode: ClassCode }) {
 
 function LoginForm({ classCode }: { classCode: ClassCode }) {
   const [state, formAction, pending] = useActionState(unlockTeacherClassAction, INITIAL_AUTH_STATE);
-  const [showPassword, setShowPassword] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const className = CLASS_UI_NAME_BY_CODE[classCode];
   useSuccessRedirect(classCode, state.success);
@@ -85,19 +84,10 @@ function LoginForm({ classCode }: { classCode: ClassCode }) {
           id="teacher-password"
           name="password"
           label="비밀번호"
+          placeholder="비밀번호 입력"
           autoComplete="current-password"
           disabled={pending}
-          visible={showPassword}
         />
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-600">
-          <input
-            type="checkbox"
-            checked={showPassword}
-            onChange={(event) => setShowPassword(event.target.checked)}
-            className="size-4 rounded border-slate-300 text-brand focus:ring-brand"
-          />
-          비밀번호 표시
-        </label>
         <AuthError message={state.error} />
         <Button type="submit" loading={pending} loadingLabel="로그인 중" className="w-full">
           로그인
@@ -147,7 +137,6 @@ function AuthCard({ title, description, children }: { title: string; description
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="p-6 pb-4 text-center">
-        <p className="mb-2 text-xs font-semibold text-brand">영동미래고등학교</p>
         <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
@@ -156,21 +145,51 @@ function AuthCard({ title, description, children }: { title: string; description
   );
 }
 
-function PasswordField({ inputRef, id, name, label, autoComplete, disabled, visible = false }: { inputRef?: RefObject<HTMLInputElement | null>; id: string; name: string; label: string; autoComplete: "current-password" | "new-password"; disabled: boolean; visible?: boolean }) {
+function PasswordField({ inputRef, id, name, label, placeholder, autoComplete, disabled }: { inputRef?: RefObject<HTMLInputElement | null>; id: string; name: string; label: string; placeholder?: string; autoComplete: "current-password" | "new-password"; disabled: boolean }) {
+  const [visible, setVisible] = useState(false);
   return (
-    <label htmlFor={id} className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-slate-700">{label}</span>
-      <input
-        ref={inputRef}
-        id={id}
-        name={name}
-        type={visible ? "text" : "password"}
-        autoComplete={autoComplete}
-        required
-        disabled={disabled}
-        className="min-h-11 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-70"
-      />
-    </label>
+    <div>
+      <label htmlFor={id} className="sr-only">{label}</label>
+      <div className="relative">
+        <input
+          ref={inputRef}
+          id={id}
+          name={name}
+          type={visible ? "text" : "password"}
+          autoComplete={autoComplete}
+          required
+          disabled={disabled}
+          placeholder={placeholder ?? label}
+          className="min-h-11 w-full rounded-lg border border-line bg-white px-3 py-2 pr-11 text-sm text-slate-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-70"
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((prev) => !prev)}
+          disabled={disabled}
+          aria-label={visible ? `${label} 숨기기` : `${label} 표시`}
+          aria-pressed={visible}
+          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 transition-colors hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+        >
+          <EyeIcon open={visible} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EyeIcon({ open }: { open: boolean }) {
+  const common = { className: "size-5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, "aria-hidden": true } as const;
+  return open ? (
+    <svg {...common}>
+      <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ) : (
+    <svg {...common}>
+      <path d="M3 3l18 18" />
+      <path d="M10.6 5.1A9.9 9.9 0 0 1 12 5c6 0 9.5 7 9.5 7a17.4 17.4 0 0 1-3.2 4.1M6.6 6.6C4 8.3 2.5 12 2.5 12a17.6 17.6 0 0 0 4.1 5.2A10 10 0 0 0 12 19c1 0 2-.15 2.9-.44" />
+      <path d="M9.9 10a3 3 0 0 0 4.1 4.1" />
+    </svg>
   );
 }
 

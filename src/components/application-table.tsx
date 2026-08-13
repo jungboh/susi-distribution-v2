@@ -99,12 +99,27 @@ export function ApplicationTable({
   const fields = COMMON_FIELDS;
   const [rows, setRows] = useState(initialApplications);
   const rowsRef = useRef(initialApplications);
+  const dirtyFieldsRef = useRef(new Set<string>());
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    rowsRef.current = initialApplications;
-    setRows(initialApplications);
+    // Fields the user has typed into but not yet committed (e.g. still focused) must
+    // survive an incoming refresh triggered by a sibling editor saving a shared field.
+    const merged = dirtyFieldsRef.current.size === 0 ? initialApplications : initialApplications.map((row) => {
+      const localRow = rowsRef.current.find((item) => item.id === row.id);
+      if (!localRow) return row;
+      let next = row;
+      for (const field of fields) {
+        if (!dirtyFieldsRef.current.has(`${row.id}:${field.key}`)) continue;
+        if (next[field.key] === localRow[field.key]) continue;
+        next = { ...next, [field.key]: localRow[field.key] };
+      }
+      return next;
+    });
+    rowsRef.current = merged;
+    setRows(merged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialApplications]);
 
   function commitRows(next: Application[]) {
@@ -114,6 +129,7 @@ export function ApplicationTable({
   }
 
   function updateLocal(id: string, key: FieldKey, value: string) {
+    dirtyFieldsRef.current.add(`${id}:${key}`);
     const next = rowsRef.current.map((row) =>
       row.id === id ? { ...row, [key]: value } : row
     );
@@ -131,6 +147,7 @@ export function ApplicationTable({
           key,
           value || null
         );
+        dirtyFieldsRef.current.delete(`${id}:${key}`);
         commitRows(
           rowsRef.current.map((row) => (row.id === id ? updated : row))
         );
