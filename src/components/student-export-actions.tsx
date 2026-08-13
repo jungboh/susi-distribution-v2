@@ -1,14 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function StudentExportActions({ studentId }: { studentId: string }) {
   const [isExporting, setIsExporting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
   const printHref = `/teacher/students/${studentId}/print`;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) setIsOpen(false);
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOpen]);
 
   async function downloadExcel() {
     if (isExporting) return;
+    setIsOpen(false);
     setIsExporting(true);
     setError("");
 
@@ -47,22 +69,26 @@ export function StudentExportActions({ studentId }: { studentId: string }) {
   }
 
   return (
-    <div className="rounded-ui border border-line bg-white p-4 shadow-card">
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+    <div ref={menuRef} className="relative">
+      <button type="button" aria-expanded={isOpen} aria-controls="student-export-menu" onClick={() => setIsOpen((open) => !open)} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-brand bg-white px-4 text-sm font-bold text-brand hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">▣ 문서 출력⌄</button>
+      {isOpen && <div id="student-export-menu" role="menu" className="absolute right-0 z-20 mt-2 grid w-52 gap-1 rounded-xl border border-line bg-white p-2 shadow-xl">
         <a
           href={`${printHref}?auto=1&intent=pdf`}
           target="_blank"
           rel="noreferrer"
           aria-label="PDF 저장 화면 새 창으로 열기"
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          role="menuitem"
+          onClick={() => setIsOpen(false)}
+          className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-slate-700 hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           PDF 저장
         </a>
         <button
           type="button"
           onClick={downloadExcel}
+          role="menuitem"
           disabled={isExporting}
-          className="min-h-11 rounded-lg border border-brand px-4 py-2 text-sm font-semibold text-brand hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+          className="min-h-10 rounded-lg px-3 text-left text-sm font-semibold text-slate-700 hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
         >
           {isExporting ? "엑셀 생성 중…" : "엑셀 저장"}
         </button>
@@ -71,7 +97,9 @@ export function StudentExportActions({ studentId }: { studentId: string }) {
           target="_blank"
           rel="noreferrer"
           aria-label="인쇄 화면 새 창으로 열기"
-          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          role="menuitem"
+          onClick={() => setIsOpen(false)}
+          className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-slate-700 hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           인쇄
         </a>
@@ -80,11 +108,13 @@ export function StudentExportActions({ studentId }: { studentId: string }) {
           target="_blank"
           rel="noreferrer"
           aria-label="학부모 확인서 새 창으로 열기"
-          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          role="menuitem"
+          onClick={() => setIsOpen(false)}
+          className="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-semibold text-slate-700 hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           학부모 확인서
         </a>
-      </div>
+      </div>}
       {error && (
         <p role="alert" className="mt-2 text-xs text-red-500">
           {error}
