@@ -1,5 +1,11 @@
 # Known Issues
 
+## 2026-08-13 문서 갱신 시점 Confirmed Gaps
+
+- `codex/issue-2-task-003-c8c-teacher-consultation-autosave` 브랜치가 `origin/main` 대비 2 커밋(Task 003-C8C, post-C8C 스타일링 패스) 앞서 있고 **push 안 됨**. PM 검토·게시 승인 전까지 다른 작업자는 이 변경 사항을 볼 수 없다.
+- 목업 이미지(`목업이미지.png`) 대비 코드 미구현 항목: QR 코드 출력(Task 003-C7A 정책상 영구 미구현), 작성 완료/진행중/미작성 상태 분류, 대시보드 진행률 도넛차트·최근 작성 학생 목록·실제 공지사항 데이터, 로그인 화면 "비밀번호를 잊으셨나요?" 링크(대상 기능 없어 미추가), 학생 상세 화면의 지원대학현황/체크리스트/제출서류/기록 4-tab 구조(현재는 단일 스크롤 화면), 학생 관리 표의 번호·최근 수정일 열과 페이지네이션(데이터 소스 없음)
+- `.claude/skills/ui-design/SKILL.md`가 Task 003-C1 이전의 구 디자인 시스템(brand blue/slate, `class-selector.tsx`/`teacher-header.tsx` 참조)을 기술하고 있으나 두 참조 파일은 더 이상 어디에서도 import되지 않는 죽은 코드다. 실제 교사 화면은 `docs/01_ARCHITECTURE/UI_DESIGN_SYSTEM.md`의 navy/semantic token 체계(C1~C8C)를 따른다. 학생 `/apply/[code]` 화면(`checklist-panel.tsx` 등)은 구 디자인 시스템을 계속 사용 중이라 스킬 문서 자체가 틀린 것은 아니지만, 교사 화면 작업 시 참조하면 안 된다.
+
 ## Task 003-B0 Confirmed Gaps
 
 - 학부모 확인서는 금융 전용 원본 기준으로 구현했으나 실제 4개 학급 데이터와 A4 Portrait 인쇄 QA가 필요함

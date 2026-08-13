@@ -1,5 +1,39 @@
 # Changelog
 
+## Post-C8C 스타일링 패스 — 2026-08-13 (commit `b4de609`, Task 번호 미부여, 로컬 구현·미push)
+
+- 기존 `tailwind.config.ts`/`globals.css` 토큰만 사용해 목업 시각 언어를 landing class card, teacher sidebar, dashboard metric card, 링크 관리 화면에 적용
+- Landing class card: navy 배경 + 중앙 아이콘 + "로그인" 버튼, 유통반 아이콘을 cart 아이콘으로 교체
+- Teacher sidebar: nav 항목에 아이콘 추가, 비활성(준비 중) 항목 상태 유지
+- Teacher dashboard: metric card에 아이콘 배지 추가, 라벨/값/계산 로직 변경 없음
+- 링크 관리: 개별 링크 / 일괄 링크 관리 / 안내문 출력 3-tab으로 재구성, 기존 action 위치만 이동
+- QR은 Task 003-C7A PM 정책 결정에 따라 목업에 있어도 계속 미구현
+- PM 페르소나 'j' 리뷰: GO
+- DB/migration/auth/dependency 변경 없음, commit/push/deploy 없음
+
+## Task 003-C8C — 2026-08-13 (commit `8f6c715`, 로컬 구현·미push)
+
+- 신규 22개 상담 필드(Teacher 편집)를 위한 field-key 단위 자동저장 엔진 구현: in-flight guard + 최신값 coalescing
+- blur flush, application 전환 flush(에러 필드 시 `confirm()`), `beforeunload` 저장 중 경고 추가
+- `consultation-panel.tsx`에 application state를 끌어올려 신규 37필드 editor와 기존 application table 동기화; `application-table.tsx`는 필드별 dirty state 추적
+- 신규 파일: `src/components/consultation/consultation-editor.tsx`, `consultation-panel.tsx`, `index.ts`
+- 기존 15개 필드 저장 계약, 신규 22개 Teacher-only allowlist 회귀 없음 (typecheck/lint/build, `git diff --check` 통과)
+- PM 페르소나 'j' 리뷰: GO
+- DB/migration 변경 없음(스키마는 003-C8B `0011`에서 이미 추가됨), commit/push/deploy 없음
+
+## Task PIPELINE-001B — 2026-08-12 (commit `09f5e49`, PR #5 `ad07dab`)
+
+- Codex 실행 결과 JSON을 Structured Outputs와 호환되도록 schema 수정
+- PIPELINE-001 기반 위에서 실제 파이프라인 실행 중 발견된 schema 호환성 문제 후속 수정
+
+## Task 003-C8B — 2026-08-12 (commit `4e54d9e`, `CURRENT_TASK.md`의 base checkpoint)
+
+- 상담 화면 신규 22개 필드용 migration `0011_add_application_consultation_fields.sql` 추가
+- 기존 15개 필드 + 신규 22개 필드의 37개 전체 대응표와 역할별 UI 설계 문서(C8B-1) 작성
+- 공유 UI foundation(Button/Card/DataTable/EmptyState/PageLayout/StatusBadge/Typography), `class-codes.ts`, `field-metadata.ts`, teacher app shell/dashboard 초기 버전 구현(C8B-2)
+- `student-export-excel.ts`/`student-export-shared.ts`/`student-link-url.ts`/`types.ts` 확장
+- PM 페르소나 'j' 리뷰 관례가 이 시점부터 커밋 메시지에 등장
+
 ## Task PIPELINE-001 — 2026-08-12
 
 - PM 작업지를 위한 GitHub Issue 템플릿과 Draft PR 검토 게이트 추가

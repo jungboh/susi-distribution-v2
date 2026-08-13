@@ -13,7 +13,7 @@
 - PROJECT_ROOT: `C:\Users\IIBI\Desktop\susi-integrated-work\susi-distribution-v2`
 - GitHub: `jungboh/susi-distribution-v2`
 - Netlify candidate: `susi-distribution-v2.netlify.app`
-- Git: `main`, origin/main과 0 ahead / 0 behind (Task 003-B0)
+- Git: 작업 브랜치 `codex/issue-2-task-003-c8c-teacher-consultation-autosave`, `origin/main` 대비 2 ahead / 0 behind, push 안 됨 (2026-08-13 기준, Task 003-B0 문서화 시점의 `main` 0/0 상태에서 이후 갱신)
 
 ## ACTIVE_COMPATIBILITY
 
@@ -50,15 +50,23 @@ Blue/Gray, Deep Navy, White, rounded card, 얇은 border, 절제된 shadow, 명�
 
 ## Last Completed Task
 
-Task 003-C6 — Document Output and Print Layout, READY FOR PM REVIEW
+Task 003-C8C — Consultation Field Autosave Engine (`8f6c715`), 이어서 post-C8C 스타일링 패스(`b4de609`, Task 번호 미부여). 둘 다 로컬 구현 완료, **push 안 됨**, 사용자 게시 승인 대기.
 
 ## C6 Implementation
 
 학생별 Excel과 `/teacher/students/[id]/print?auto=1&intent=pdf|print` 구조를 유지했다. 일반 출력은 A4 landscape 10mm이며 Excel은 네 학급 공통 23열이다. 학부모 확인서는 기존 금융 전용 `jungboh/susi`의 `StudentPrintDocument` 원본을 확인해 `?mode=parent`로 구현했다. 원본의 2026학년도 확인 문구, 학생과의 관계, 학부모 성명·서명란, A4 Portrait 구성과 하단 영동미래고등학교 표기를 보존한다. 학생 정보·학급·지원대학·제출서류만 검증된 실제 데이터로 치환하며 QR/접속 URL은 넣지 않는다. C7 안내문과 별도 문서다.
 
+## C8C Implementation — 2026-08-13 문서 갱신
+
+37개 상담 필드 중 신규 22개(Teacher 편집)를 위한 field-key 단위 자동저장 엔진을 구현했다. in-flight guard와 최신값 coalescing으로 동일 필드 중복 저장이 순서를 벗어나 완료되는 것을 막고, blur flush·application 전환 flush(에러 필드 있으면 `confirm()`)·`beforeunload` 경고를 추가했다. `consultation-panel.tsx`에 application state를 끌어올려 신규 editor와 기존 application table이 서로의 미저장 편집을 덮어쓰지 않도록 동기화했다. 기존 15개 필드 저장 계약과 신규 22개 Teacher-only allowlist에는 회귀가 없다(로컬 typecheck/lint/build 통과, PM 페르소나 'j' 리뷰 GO).
+
+## Post-C8C 스타일링 패스 — 2026-08-13 문서 갱신
+
+기존 Tailwind 토큰만으로 목업 시각 언어를 landing class card(navy+아이콘+로그인 버튼), sidebar(nav 아이콘), dashboard(metric card 아이콘 배지), 링크 관리(개별/일괄/안내문 3-tab)에 적용했다. 목업에는 QR 코드 출력 탭·QR 열·QR 일괄 출력 버튼이 있으나, Task 003-C7A의 "QR을 절대 구현하지 않는다"는 PM 정책 결정에 따라 QR은 계속 제외한다. 완료/진행중/미작성 상태 분류, 진행률 도넛차트, 최근 작성 학생 목록, 실제 공지사항 데이터도 목업에는 있지만 판정 규칙·데이터 모델이 없어 이번 패스에서 구현하지 않았다(별도 PM 결정 필요, `PROJECT_DASHBOARD.md` Known Gaps 참고).
+
 ## Next Task
 
-Task 003-C7A — QR Removal + Student URL Policy Simplification은 PM 검토 대기 상태다.
+Task 003-C8D — Student 기존 편집 15개 보존 + 신규 22개 읽기 전용 상담 화면. 착수 근거 없음, PLANNED. 그 전에 로컬 미push 커밋(`8f6c715`, `b4de609`)의 PM 검토·게시 승인이 필요하다.
 
 ## Implementation Phases
 
