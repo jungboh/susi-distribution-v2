@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --color-navy: 211 83% 19%;
-  --color-brand: 221 83% 53%;
-  --color-brand-dark: 224 76% 48%;
-  --color-page: 220 33% 97%;
+  --color-navy: 216 88% 20%;
+  --color-brand: 216 86% 31%;
+  --color-brand-dark: 216 90% 23%;
+  --color-page: 216 33% 98%;
   --color-surface: 0 0% 100%;
   --color-subtle: 210 40% 98%;
   --color-text-primary: 222 47% 11%;
@@ -19,8 +19,8 @@
   --color-warning: 32 95% 44%;
   --color-danger: 0 72% 51%;
   --color-neutral: 215 16% 47%;
-  --radius-ui: 0.75rem;
-  --shadow-card: 0 4px 16px rgb(15 23 42 / 0.06);
+  --radius-ui: 0.65rem;
+  --shadow-card: 0 5px 18px rgb(15 45 82 / 0.07);
 }
 
 html,
@@ -29,7 +29,9 @@ body {
 }
 
 body {
-  background-color: hsl(var(--color-page));
+  background:
+    radial-gradient(circle at 82% 0%, rgb(219 232 248 / 0.48), transparent 32rem),
+    hsl(var(--color-page));
   color: hsl(var(--color-text-primary));
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
@@ -48,6 +50,36 @@ body {
 }
 
 @layer components {
+  .landing-hero {
+    background:
+      linear-gradient(180deg, rgb(246 250 255 / 0.25), rgb(255 255 255 / 0.92)),
+      radial-gradient(circle at 50% -18%, rgb(150 184 221 / 0.32), transparent 48%);
+  }
+
+  .landing-hero::before,
+  .landing-hero::after {
+    content: "";
+    position: absolute;
+    left: -8%;
+    width: 116%;
+    border-radius: 50% 50% 0 0;
+    pointer-events: none;
+  }
+
+  .landing-hero::before {
+    bottom: 12%;
+    height: 39%;
+    background: rgb(216 229 245 / 0.62);
+    transform: rotate(3deg);
+  }
+
+  .landing-hero::after {
+    bottom: 3%;
+    height: 36%;
+    background: rgb(240 246 253 / 0.94);
+    transform: rotate(-3deg);
+  }
+
   .ui-table-shell {
     @apply overflow-x-auto rounded-ui border border-line bg-surface shadow-card;
   }

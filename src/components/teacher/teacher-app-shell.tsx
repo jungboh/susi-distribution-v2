@@ -22,20 +22,20 @@ export function TeacherAppShell({ classCode, view, title, children }: { classCod
   }, [open]);
 
   return (
-    <div className="min-h-screen bg-page lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-page lg:grid lg:grid-cols-[172px_minmax(0,1fr)]">
       {open && <button type="button" aria-label="메뉴 닫기" className="fixed inset-0 z-40 bg-slate-950/35 lg:hidden" onClick={() => setOpen(false)} />}
-      <aside id="teacher-navigation" className={cx("fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col bg-navy text-white shadow-xl transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:w-auto lg:translate-x-0 lg:shadow-none", open && "translate-x-0")}>
-        <div className="border-b border-white/10 px-5 py-6"><p className="text-xs font-semibold text-blue-200">영동미래고등학교</p><p className="mt-2 text-xl font-bold">{className}</p><p className="mt-1 text-xs text-slate-300">2026학년도 수시자료 관리</p></div>
-        <nav aria-label="담임 메뉴" className="flex-1 space-y-1 px-3 py-5">
+      <aside id="teacher-navigation" className={cx("fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col border-r border-line bg-white text-navy shadow-xl transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:w-auto lg:translate-x-0 lg:shadow-none", open && "translate-x-0")}>
+        <div className="border-b border-line px-5 py-6 lg:hidden"><p className="text-xs font-semibold text-brand">영동미래고등학교</p><p className="mt-2 text-xl font-bold">{className}</p><p className="mt-1 text-xs text-muted">2026학년도 수시자료 관리</p></div>
+        <nav aria-label="담임 메뉴" className="flex-1 space-y-2 px-3 py-14 lg:py-16">
           <NavLink href={`/teacher?class=${classCode}`} active={view === "dashboard"} icon="dashboard" onClick={() => setOpen(false)}>대시보드</NavLink>
           <NavLink href={`/teacher?class=${classCode}&view=students`} active={view === "students"} icon="students" onClick={() => setOpen(false)}>학생 관리</NavLink>
           <NavLink href={`/teacher?class=${classCode}&view=links`} active={view === "links"} icon="links" onClick={() => setOpen(false)}>링크 관리</NavLink>
-          {(["download", "notice", "settings"] as const).map((icon) => <div key={icon} className="flex min-h-11 items-center justify-between rounded-lg px-3 text-sm text-slate-400" aria-disabled="true"><span className="flex items-center gap-3"><NavIcon name={icon} />{NAV_DISABLED_LABEL[icon]}</span><span className="text-[10px] font-semibold">준비 중</span></div>)}
+          {(["download", "notice", "settings"] as const).map((icon) => <div key={icon} className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-slate-600" aria-disabled="true"><span className="flex items-center gap-3"><NavIcon name={icon} />{NAV_DISABLED_LABEL[icon]}</span></div>)}
         </nav>
-        <div className="border-t border-white/10 p-3 lg:hidden"><button type="button" onClick={() => setOpen(false)} className="min-h-10 w-full rounded-lg text-sm font-semibold text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300">메뉴 닫기</button></div>
+        <div className="border-t border-line p-3 lg:hidden"><button type="button" onClick={() => setOpen(false)} className="min-h-10 w-full rounded-lg text-sm font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">메뉴 닫기</button></div>
       </aside>
       <div className="flex min-h-screen min-w-0 flex-col">
-        <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur"><div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8"><div className="flex min-w-0 items-center gap-3"><button type="button" aria-label="담임 메뉴 열기" aria-controls="teacher-navigation" aria-expanded={open} onClick={() => setOpen(true)} className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:hidden"><span aria-hidden="true" className="text-xl">☰</span></button><div className="min-w-0"><h1 className="truncate text-base font-bold text-slate-900 sm:text-xl">{title}</h1><p className="truncate text-xs text-muted sm:hidden">{className} · 2026학년도</p></div></div><div className="flex shrink-0 items-center gap-2"><span className="hidden rounded-lg border border-line bg-subtle px-3 py-2 text-xs font-semibold text-slate-700 sm:inline-flex">2026학년도</span><span className="hidden text-xs font-semibold text-slate-600 md:inline">{className} 담임</span><form action={lockTeacherClassAction}><Button type="submit" variant="secondary" size="sm" className="px-2.5 sm:px-3">로그아웃</Button></form></div></div></header>
+        <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur"><div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8"><div className="flex min-w-0 items-center gap-3"><button type="button" aria-label="담임 메뉴 열기" aria-controls="teacher-navigation" aria-expanded={open} onClick={() => setOpen(true)} className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:hidden"><span aria-hidden="true" className="text-xl">☰</span></button><div className="min-w-0"><h1 className="truncate text-base font-bold text-navy sm:text-2xl">{title}</h1><p className="truncate text-xs text-muted sm:hidden">{className} · 2026학년도</p></div></div><div className="flex shrink-0 items-center gap-3"><span className="hidden text-xs font-bold text-brand md:inline">{className} 담임 선생님</span><form action={lockTeacherClassAction}><Button type="submit" size="sm" className="px-3">로그아웃</Button></form><span className="hidden rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-slate-700 sm:inline-flex">2026학년도⌄</span></div></div></header>
         <main className="flex-1">{children}</main><SiteFooter />
       </div>
     </div>
@@ -51,7 +51,7 @@ const NAV_DISABLED_LABEL: Record<"download" | "notice" | "settings", string> = {
 };
 
 function NavLink({ href, active, icon, onClick, children }: { href: string; active: boolean; icon: NavIconName; onClick: () => void; children: ReactNode }) {
-  return <Link href={href} aria-current={active ? "page" : undefined} onClick={onClick} className={cx("flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300", active ? "bg-white text-navy" : "text-slate-200 hover:bg-white/10 hover:text-white")}><NavIcon name={icon} />{children}</Link>;
+  return <Link href={href} aria-current={active ? "page" : undefined} onClick={onClick} className={cx("flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand", active ? "bg-navy text-white shadow-sm" : "text-slate-700 hover:bg-blue-50 hover:text-navy")}><NavIcon name={icon} />{children}</Link>;
 }
 
 function NavIcon({ name }: { name: NavIconName }) {

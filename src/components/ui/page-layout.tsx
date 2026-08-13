@@ -2,7 +2,7 @@ import type { HTMLAttributes, ReactNode } from "react";
 import { cx } from "@/lib/ui";
 
 export function PageContainer({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cx("mx-auto w-full max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8", className)} {...props} />;
+  return <div className={cx("mx-auto w-full max-w-screen-2xl px-4 py-5 sm:px-6 lg:px-7", className)} {...props} />;
 }
 
 export type PageHeaderProps = HTMLAttributes<HTMLElement> & {
@@ -31,7 +31,7 @@ export type PageSectionProps = HTMLAttributes<HTMLElement> & {
 
 export function PageSection({ title, description, actions, children, className, ...props }: PageSectionProps) {
   return (
-    <section className={cx("mb-8", className)} {...props}>
+    <section className={cx("mb-6", className)} {...props}>
       {(title || description || actions) && (
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
