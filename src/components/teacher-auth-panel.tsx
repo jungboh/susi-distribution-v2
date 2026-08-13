@@ -137,7 +137,7 @@ function AuthCard({ title, description, children }: { title: string; description
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="p-6 pb-4 text-center">
-        <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
+        <CardTitle className="text-xl text-navy sm:text-2xl">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       {children && <CardContent className="p-6 pt-2">{children}</CardContent>}

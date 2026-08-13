@@ -54,8 +54,8 @@ export function AdmissionExcelImport() {
   }
 
   return (
-    <section className="mb-5 rounded-xl border border-emerald-200 bg-white p-4">
-      <button type="button" onClick={() => setOpen((value) => !value)} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+    <section className="mb-5 rounded-xl border border-line bg-white p-4">
+      <button type="button" onClick={() => setOpen((value) => !value)} className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">
         입결통합 Excel 가져오기
       </button>
       {open && <div className="mt-4">
@@ -64,7 +64,7 @@ export function AdmissionExcelImport() {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setPreview(null); setResult(null); setError(null); }} className="max-w-full text-sm" />
           {file && <span className="text-xs text-slate-500">{file.name} · {(file.size / 1024).toFixed(1)}KB</span>}
-          <button type="button" onClick={analyze} disabled={!file || isPending} className="rounded-lg border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-700 disabled:border-slate-200 disabled:text-slate-300">{isPending ? "처리 중..." : "분석 시작"}</button>
+          <button type="button" onClick={analyze} disabled={!file || isPending} className="rounded-lg border border-brand px-3 py-2 text-xs font-semibold text-brand disabled:border-slate-200 disabled:text-slate-300">{isPending ? "처리 중..." : "분석 시작"}</button>
         </div>
         {error && <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         {preview && <div className="mt-5">
@@ -73,7 +73,7 @@ export function AdmissionExcelImport() {
               ["전체", preview.summary.total], ["학생", preview.summary.studentCount], ["정확 매칭", preview.summary.exact],
               ["확인 필요", preview.summary.review], ["미매칭", preview.summary.unmatched], ["신규", preview.summary.additions],
               ["완전 중복", preview.summary.duplicates], ["빈 필드 보완", preview.summary.fills], ["갱신 후보", preview.summary.updates],
-            ].map(([label, value]) => <div key={String(label)} className="rounded-lg bg-emerald-50 p-2"><div className="text-slate-500">{label}</div><div className="text-lg font-bold text-slate-800">{value}</div></div>)}
+            ].map(([label, value]) => <div key={String(label)} className="rounded-lg bg-slate-50 p-2"><div className="text-slate-500">{label}</div><div className="text-lg font-bold text-slate-800">{value}</div></div>)}
           </div>
           <div className="mt-3 max-h-[560px] overflow-auto rounded-lg border border-slate-200">
             <table className="min-w-[1500px] border-collapse text-xs">
@@ -92,7 +92,7 @@ export function AdmissionExcelImport() {
               </tr>)}</tbody>
             </table>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3"><button type="button" onClick={applyImport} disabled={!selectedCount || isPending} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300">최종 반영 ({selectedCount}개)</button><span className="text-xs text-slate-500">최종 반영 시 원본 파일과 DB 상태를 서버에서 다시 검증합니다.</span></div>
+          <div className="mt-3 flex flex-wrap items-center gap-3"><button type="button" onClick={applyImport} disabled={!selectedCount || isPending} className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300">최종 반영 ({selectedCount}개)</button><span className="text-xs text-slate-500">최종 반영 시 원본 파일과 DB 상태를 서버에서 다시 검증합니다.</span></div>
         </div>}
         {result && <div className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">추가 {result.inserted} · 보완/갱신 {result.updated} · 제외 {result.skipped} · 실패 {result.failed}{result.failures.map((failure) => <div key={failure} className="mt-1 text-xs text-red-700">{failure}</div>)}</div>}
       </div>}

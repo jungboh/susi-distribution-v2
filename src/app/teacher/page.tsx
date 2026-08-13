@@ -36,7 +36,7 @@ export default async function TeacherPage({ searchParams }: { searchParams: Prom
     logServerError("page.teacher.verify-session", error);
   }
   if (!session || session.classCode !== classCode) {
-    return <div className="flex min-h-screen flex-col bg-page"><main className="relative flex flex-1 items-center py-10 sm:py-16"><div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,hsl(var(--color-brand)/0.12),transparent_62%)]" /><PageContainer className="relative flex justify-center"><TeacherAuthPanel classCode={classCode} /></PageContainer></main><AppFooter /></div>;
+    return <div className="flex min-h-screen flex-col bg-page"><main className="relative flex flex-1 items-center py-10 sm:py-16"><div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-br from-navy/15 via-brand/10 to-transparent" /><PageContainer className="relative flex justify-center"><TeacherAuthPanel classCode={classCode} /></PageContainer></main><AppFooter /></div>;
   }
 
   const titleByView = { dashboard: "대시보드", students: "학생 관리", links: "링크 관리" } as const;
