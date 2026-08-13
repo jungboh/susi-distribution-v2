@@ -3,18 +3,24 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { buildStudentUrl } from "@/lib/student-link-url";
 
+const COPY_TIMEOUT_MS = 1500;
+
 export function CopyLinkButton({ code }: { code: string }) {
-  const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [status, setStatus] = useState<"idle" | "copying" | "copied" | "failed">("idle");
   const [isFallbackOpen, setIsFallbackOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyAttemptRef = useRef(0);
   const fallbackId = useId();
   const url = buildStudentUrl(code);
 
   useEffect(() => {
     return () => {
+      copyAttemptRef.current += 1;
       if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
     };
   }, []);
 
@@ -43,7 +49,16 @@ export function CopyLinkButton({ code }: { code: string }) {
     }, 2500);
   }
 
+  function invalidateCopyAttempt() {
+    copyAttemptRef.current += 1;
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = null;
+    }
+  }
+
   function openFallback(failed = false) {
+    invalidateCopyAttempt();
     if (resetTimerRef.current) {
       clearTimeout(resetTimerRef.current);
       resetTimerRef.current = null;
@@ -59,11 +74,45 @@ export function CopyLinkButton({ code }: { code: string }) {
   }
 
   async function handleCopy() {
+    if (status === "copying") return;
+
+    invalidateCopyAttempt();
+    if (resetTimerRef.current) {
+      clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = null;
+    }
+    const attempt = copyAttemptRef.current;
+    setStatus("copying");
+
+    if (!navigator.clipboard?.writeText) {
+      if (attempt === copyAttemptRef.current) openFallback(true);
+      return;
+    }
+
     try {
-      if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
-      await navigator.clipboard.writeText(url);
+      const result = await Promise.race([
+        navigator.clipboard.writeText(url).then(() => "copied" as const),
+        new Promise<"timeout">((resolve) => {
+          copyTimeoutRef.current = setTimeout(() => resolve("timeout"), COPY_TIMEOUT_MS);
+        }),
+      ]);
+
+      if (attempt !== copyAttemptRef.current) return;
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = null;
+      }
+      if (result === "timeout") {
+        openFallback(true);
+        return;
+      }
       showCopiedStatus();
     } catch {
+      if (attempt !== copyAttemptRef.current) return;
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+        copyTimeoutRef.current = null;
+      }
       openFallback(true);
     }
   }
@@ -74,11 +123,12 @@ export function CopyLinkButton({ code }: { code: string }) {
         ref={buttonRef}
         type="button"
         onClick={handleCopy}
+        disabled={status === "copying"}
         aria-expanded={isFallbackOpen}
         aria-controls={fallbackId}
-        className="min-h-9 rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className="min-h-9 rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-wait disabled:opacity-70"
       >
-        {status === "copied" ? "복사됨" : "링크 복사"}
+        {status === "copying" ? "복사 중…" : status === "copied" ? "복사됨" : "링크 복사"}
       </button>
       <button
         type="button"
