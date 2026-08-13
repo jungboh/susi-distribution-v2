@@ -135,12 +135,12 @@ function PasswordSetupForm({ classCode }: { classCode: ClassCode }) {
 
 function AuthCard({ title, description, children }: { title: string; description: string; children?: ReactNode }) {
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="p-6 pb-4 text-center">
-        <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
+    <Card className="w-full max-w-md rounded-xl border-white/70 bg-white/95 shadow-[0_20px_50px_rgb(12_45_83/0.18)]">
+      <CardHeader className="p-8 pb-5 text-center sm:p-10 sm:pb-6">
+        <CardTitle className="text-2xl text-navy sm:text-3xl">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      {children && <CardContent className="p-6 pt-2">{children}</CardContent>}
+      {children && <CardContent className="p-8 pt-2 sm:p-10 sm:pt-2">{children}</CardContent>}
     </Card>
   );
 }

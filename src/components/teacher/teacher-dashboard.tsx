@@ -50,10 +50,10 @@ export function TeacherDashboard({ classCode, students }: { classCode: ClassCode
         </div>
       </PageSection>
 
-      <div className="grid gap-5 xl:grid-cols-3">
-        <PageSection title="진행 현황" description="작성 완료 학생 비율(화면 자동 계산 기준)입니다.">
-          <Card>
-            <CardContent className="flex flex-col items-center gap-3 p-6">
+      <div className="grid items-stretch gap-5 xl:grid-cols-3">
+        <PageSection title="진행 현황" description="작성 완료 학생 비율(화면 자동 계산 기준)입니다." className="flex h-full flex-col">
+          <Card className="flex flex-1 flex-col">
+            <CardContent className="flex flex-1 flex-col items-center justify-center gap-3 p-6">
               {totalStudents === 0 ? (
                 <EmptyState title="현재 등록된 학생이 없습니다" description="학생 관리에서 학생을 등록하면 현황이 표시됩니다." />
               ) : (
@@ -66,9 +66,9 @@ export function TeacherDashboard({ classCode, students }: { classCode: ClassCode
           </Card>
         </PageSection>
 
-        <PageSection title="최근 작성 학생" description="지원대학·체크리스트가 가장 최근 수정된 학생입니다.">
-          <Card>
-            <CardContent className="p-3">
+        <PageSection title="최근 작성 학생" description="지원대학·체크리스트가 가장 최근 수정된 학생입니다." className="flex h-full flex-col">
+          <Card className="flex flex-1 flex-col">
+            <CardContent className="flex-1 p-3">
               {recentStudents.length === 0 ? (
                 <EmptyState className="m-2" title="아직 수정 이력이 없습니다" description="학생이 지원대학이나 체크리스트를 입력하면 표시됩니다." />
               ) : (
@@ -88,9 +88,9 @@ export function TeacherDashboard({ classCode, students }: { classCode: ClassCode
           </Card>
         </PageSection>
 
-        <PageSection title="공지사항">
-          <Card>
-            <CardContent className="p-6">
+        <PageSection title="공지사항" className="flex h-full flex-col">
+          <Card className="flex flex-1 flex-col">
+            <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
               <EmptyState title="공지사항 기능은 준비 중입니다" description="별도 데이터나 임시 공지는 표시하지 않습니다." />
             </CardContent>
           </Card>

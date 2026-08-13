@@ -161,16 +161,19 @@ function DesktopStudentTable({ classCode, students, startIndex }: { classCode: C
 
 function MobileStudentList({ classCode, students }: { classCode: ClassCode; students: Students }) {
   return (
-    <ul className="grid gap-3 md:hidden" aria-label="학생 목록">
+    <ul className="grid gap-2 md:hidden" aria-label="학생 목록">
       {students.map((student) => (
-        <li key={student.id} className="min-w-0 rounded-ui border border-line bg-white p-4 shadow-card">
+        <li key={student.id} className="min-w-0 rounded-ui border border-line bg-white p-3 shadow-card">
           <div className="flex min-w-0 items-start justify-between gap-3">
             <div className="min-w-0"><p className="truncate font-bold text-slate-900">{student.name}</p>{student.student_number && <p className="mt-0.5 text-xs text-muted">학번 {student.student_number}</p>}</div>
             <div className="flex shrink-0 items-center gap-2"><StatusBadge tone={STATUS_TONE[student.stats.status]}>{STUDENT_STATUS_LABEL[student.stats.status]}</StatusBadge><DetailLink href={`/teacher/students/${student.id}?class=${classCode}`} /></div>
           </div>
-          <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-subtle p-3 text-xs"><div><dt className="text-muted">지원대학</dt><dd className="mt-1 font-semibold text-slate-800">{student.stats.filledCount > 0 ? `${student.stats.filledCount}건` : "미입력"}</dd></div><div><dt className="text-muted">체크리스트</dt><dd className="mt-1 font-semibold text-slate-800">{student.stats.checklistTotal > 0 ? `${student.stats.checklistDone} / ${student.stats.checklistTotal}` : "항목 없음"}</dd></div></dl>
-          <p className="mt-2 text-xs text-muted">최근 수정일 {formatLastModified(student.stats.lastModifiedAt)}</p>
-          <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-line pt-3"><CopyLinkButton code={student.access_code} /><DeleteStudentButton studentId={student.id} name={student.name} /></div>
+          <dl className="mt-2 grid grid-cols-3 gap-2 rounded-lg bg-subtle p-2 text-xs">
+            <div className="min-w-0"><dt className="text-muted">지원대학</dt><dd className="mt-0.5 truncate font-semibold text-slate-800">{student.stats.filledCount > 0 ? `${student.stats.filledCount}건` : "미입력"}</dd></div>
+            <div className="min-w-0"><dt className="text-muted">체크리스트</dt><dd className="mt-0.5 truncate font-semibold text-slate-800">{student.stats.checklistTotal > 0 ? `${student.stats.checklistDone} / ${student.stats.checklistTotal}` : "항목 없음"}</dd></div>
+            <div className="min-w-0"><dt className="text-muted">최근 수정</dt><dd className="mt-0.5 truncate font-semibold text-slate-800">{formatLastModifiedCompact(student.stats.lastModifiedAt)}</dd></div>
+          </dl>
+          <div className="mt-2 flex flex-wrap justify-end gap-2 border-t border-line pt-2"><CopyLinkButton code={student.access_code} /><DeleteStudentButton studentId={student.id} name={student.name} /></div>
         </li>
       ))}
     </ul>
@@ -211,6 +214,11 @@ function PageLink({ href, disabled, children }: { href: string; disabled: boolea
 function formatLastModified(iso: string | null) {
   if (!iso) return "-";
   return iso.slice(0, 16).replace("T", " ");
+}
+
+function formatLastModifiedCompact(iso: string | null) {
+  if (!iso) return "-";
+  return iso.slice(5, 16).replace("T", " ");
 }
 
 function DetailLink({ href }: { href: string }) {
