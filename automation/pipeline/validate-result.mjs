@@ -25,6 +25,9 @@ for (const key of Object.keys(result)) {
 if (!["READY FOR PM REVIEW", "BLOCKED"].includes(result.status)) fail("invalid status");
 if (typeof result.summary !== "string" || !result.summary.trim()) fail("summary is required");
 if (!Array.isArray(result.files_changed)) fail("files_changed must be an array");
+if (new Set(result.files_changed).size !== result.files_changed.length) {
+  fail("files_changed must not contain duplicate entries");
+}
 if (!Array.isArray(result.validation)) fail("validation must be an array");
 if (!Array.isArray(result.risks)) fail("risks must be an array");
 if (typeof result.next_action !== "string" || !result.next_action.trim()) fail("next_action is required");
