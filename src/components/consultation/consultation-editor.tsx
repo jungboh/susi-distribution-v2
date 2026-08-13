@@ -14,7 +14,19 @@ import { ConsultationSaveStatus, ConsultationStageNavigation, type ConsultationS
 type EditableField = keyof ApplicationPatch;
 type FieldStatus = { state: ConsultationSaveState; message?: string };
 type EditorField = Pick<ConsultationFieldMetadata, "label" | "format"> & { field: EditableField };
+type ConsultationEditableField = ConsultationFieldMetadata["field"] & EditableField;
 const SAVE_DELAY_MS = 700;
+
+const FIRST_CONSULTATION_SECTIONS = {
+  conditions: ["admission_method", "csat_min_grade"],
+  grades: ["my_grade", "prev_avg_grade", "first_pass_cut", "cut_70", "additional_pass_cut"],
+  currentResults: ["result_2026_cut_50", "result_2026_cut_70", "result_2026_competition_rate", "result_2026_additional_admits"],
+  previousResults: CONSULTATION_FIELD_METADATA.filter((metadata) =>
+    metadata.stage === "first_consultation" &&
+    metadata.section === "yearly_result" &&
+    !metadata.field.startsWith("result_2026_")
+  ).map((metadata) => metadata.field),
+} as const satisfies Record<string, readonly ConsultationEditableField[]>;
 
 const LEGACY_FIELDS: readonly EditorField[] = [
   { field: "region", label: "지역", format: "text" },
@@ -232,21 +244,62 @@ export function ConsultationEditor({ studentId, initialApplications, onApplicati
         </header>
         <div className="px-5 pt-2"><ConsultationStageNavigation current={stage} onChange={setStage} /></div>
         <div className="p-5">
-          <div className="grid gap-x-7 gap-y-5 sm:grid-cols-2">
+          {stage === "first_consultation" ? <FirstConsultationWorkspace fields={stageFields} application={selected} statuses={statuses} fieldKey={fieldKey} onChange={handleChange} onBlur={flushField} onRetry={flushField} /> : <div className="grid gap-x-7 gap-y-5 sm:grid-cols-2">
             {stageFields.map((metadata) => <ConsultationInputField key={metadata.field} metadata={metadata} value={String(selected[metadata.field] ?? "")} status={statuses[fieldKey(selected.id, metadata.field)] ?? { state: "idle" }} onChange={(value) => handleChange(selected.id, metadata, value)} onBlur={() => flushField(selected.id, metadata.field)} onRetry={() => flushField(selected.id, metadata.field)} />)}
-          </div>
+          </div>}
           {stage === "common" && <details className="mt-7 rounded-lg border border-line bg-subtle/50"><summary className="cursor-pointer px-4 py-3 text-sm font-bold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">추가정보</summary><div className="grid gap-x-7 gap-y-5 border-t border-line p-4 sm:grid-cols-2">{LEGACY_FIELDS.map((metadata) => <ConsultationInputField key={metadata.field} metadata={metadata} value={String(selected[metadata.field] ?? "")} status={statuses[fieldKey(selected.id, metadata.field)] ?? { state: "idle" }} onChange={(value) => handleChange(selected.id, metadata, value)} onBlur={() => flushField(selected.id, metadata.field)} onRetry={() => flushField(selected.id, metadata.field)} />)}</div></details>}
         </div>
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-subtle/40 px-5 py-4"><p className="text-sm text-muted">☁ 입력 내용은 자동 저장됩니다</p>{stage === "common" && <button type="button" onClick={() => setStage("first_consultation")} className="min-h-11 rounded-lg border border-brand bg-white px-5 text-sm font-bold text-brand hover:bg-blue-50">다음: 1차 상담 →</button>}</footer>
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-subtle/40 px-5 py-4"><p className="text-sm text-muted">☁ 입력 내용은 자동 저장됩니다</p>{stage === "common" && <button type="button" onClick={() => setStage("first_consultation")} className="min-h-11 rounded-lg border border-brand bg-white px-5 text-sm font-bold text-brand hover:bg-blue-50">다음: 1차 상담 →</button>}{stage === "first_consultation" && <button type="button" onClick={() => setStage("second_consultation")} className="min-h-11 rounded-lg border border-brand bg-white px-5 text-sm font-bold text-brand hover:bg-blue-50">다음: 2차 상담 →</button>}</footer>
       </>}
     </section>
   </div>;
 }
 
-function ConsultationInputField({ metadata, value, status, onChange, onBlur, onRetry }: { metadata: EditorField; value: string; status: FieldStatus; onChange: (value: string) => void; onBlur: () => void; onRetry: () => void }) {
+function FirstConsultationWorkspace({ fields, application, statuses, fieldKey, onChange, onBlur, onRetry }: {
+  fields: readonly ConsultationFieldMetadata[];
+  application: Application;
+  statuses: Record<string, FieldStatus>;
+  fieldKey: (applicationId: string, field: EditableField) => string;
+  onChange: (applicationId: string, metadata: EditorField, value: string) => void;
+  onBlur: (applicationId: string, field: EditableField) => void;
+  onRetry: (applicationId: string, field: EditableField) => void;
+}) {
+  const metadataByField = new Map(fields.map((metadata) => [metadata.field, metadata]));
+  const renderField = (field: ConsultationEditableField) => {
+    const metadata = metadataByField.get(field);
+    if (!metadata) return null;
+    return <ConsultationInputField key={field} metadata={metadata} value={String(application[field] ?? "")} placeholder={field.startsWith("result_") ? "미입력" : undefined} status={statuses[fieldKey(application.id, field)] ?? { state: "idle" }} onChange={(value) => onChange(application.id, metadata, value)} onBlur={() => onBlur(application.id, field)} onRetry={() => onRetry(application.id, field)} />;
+  };
+
+  return <div className="space-y-7">
+    <ConsultationSection number="1" title="상담 핵심 조건">
+      <div className="grid gap-x-7 gap-y-5 md:grid-cols-2">{FIRST_CONSULTATION_SECTIONS.conditions.map(renderField)}</div>
+    </ConsultationSection>
+    <ConsultationSection number="2" title="학생 성적 · 참고 입결">
+      <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-5">{FIRST_CONSULTATION_SECTIONS.grades.map(renderField)}</div>
+      <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">ⓘ 전년도 참고 입결은 연도별 입결과 별도로 관리됩니다.</p>
+    </ConsultationSection>
+    <ConsultationSection number="3" title="2026 최신 입결">
+      <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h4 className="font-bold text-navy">2026학년도</h4><span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-brand shadow-sm">최신 기준</span></div>
+        <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">{FIRST_CONSULTATION_SECTIONS.currentResults.map(renderField)}</div>
+      </div>
+    </ConsultationSection>
+    <details className="rounded-xl border border-line bg-subtle/40">
+      <summary className="cursor-pointer px-4 py-3 text-sm font-bold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">이전 연도 입결 (2023~2025)</summary>
+      <div className="border-t border-line p-4"><div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">{FIRST_CONSULTATION_SECTIONS.previousResults.map(renderField)}</div><p className="mt-4 text-xs leading-5 text-muted">경쟁률·등급·인원은 입력한 원문 형식 그대로 저장됩니다.</p></div>
+    </details>
+  </div>;
+}
+
+function ConsultationSection({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
+  return <section aria-labelledby={`first-consultation-section-${number}`}><h3 id={`first-consultation-section-${number}`} className="mb-4 text-base font-bold text-navy">{number}. {title}</h3>{children}</section>;
+}
+
+function ConsultationInputField({ metadata, value, placeholder, status, onChange, onBlur, onRetry }: { metadata: EditorField; value: string; placeholder?: string; status: FieldStatus; onChange: (value: string) => void; onBlur: () => void; onRetry: () => void }) {
   const id = `consultation-${metadata.field}`;
   const controlClass = "mt-2 min-h-11 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
   const isMultiline = metadata.format === "multiline" || metadata.format === "schedule";
   const options = value && !(ADMISSION_TYPES as readonly string[]).includes(value) ? [value, ...ADMISSION_TYPES] : ADMISSION_TYPES;
-  return <div className={`min-w-0 ${isMultiline ? "sm:col-span-2" : ""}`}><label htmlFor={id} className="text-sm font-semibold text-slate-700">{metadata.label}</label>{metadata.format === "select" ? <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={controlClass}><option value="">선택</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select> : isMultiline ? <textarea id={id} value={value} rows={metadata.format === "schedule" ? 4 : 3} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={`${controlClass} resize-y whitespace-pre-wrap`} /> : <input id={id} type={metadata.field.toString().endsWith("_date") ? "date" : "text"} value={value} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={controlClass} />}<div className="mt-1 flex min-h-8 items-center justify-between gap-2"><ConsultationSaveStatus state={status.state} />{status.state === "error" && <button type="button" onClick={onRetry} className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700">다시 시도</button>}</div>{status.message && <p role="alert" className="text-xs text-red-700">{status.message}</p>}</div>;
+  return <div className={`min-w-0 ${isMultiline ? "sm:col-span-2" : ""}`}><label htmlFor={id} className="text-sm font-semibold text-slate-700">{metadata.label}</label>{metadata.format === "select" ? <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={controlClass}><option value="">선택</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select> : isMultiline ? <textarea id={id} value={value} rows={metadata.format === "schedule" ? 4 : 3} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={`${controlClass} resize-y whitespace-pre-wrap`} /> : <input id={id} type={metadata.field.toString().endsWith("_date") ? "date" : "text"} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={controlClass} />}<div className="mt-1 flex min-h-8 items-center justify-between gap-2"><ConsultationSaveStatus state={status.state} />{status.state === "error" && <button type="button" onClick={onRetry} className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700">다시 시도</button>}</div>{status.message && <p role="alert" className="text-xs text-red-700">{status.message}</p>}</div>;
 }
