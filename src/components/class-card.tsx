@@ -6,14 +6,14 @@ export function ClassCard({ classCode }: { classCode: ClassCode }) {
   const className = CLASS_UI_NAME_BY_CODE[classCode];
 
   return (
-    <div className="group flex min-h-56 flex-col items-center gap-4 rounded-xl border border-white/30 bg-gradient-to-b from-[#7899bf] to-[#567da9] p-5 text-center text-white shadow-[0_12px_24px_rgb(21_56_96/0.16)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgb(21_56_96/0.22)] first:bg-gradient-to-b first:from-[#15569b] first:to-[#073a78]">
+    <div className="group flex min-h-56 flex-col items-center gap-4 rounded-xl border border-white/30 bg-gradient-to-b from-[#7899bf] to-[#567da9] p-5 text-center text-white shadow-[0_12px_24px_rgb(21_56_96/0.16)] transition duration-200 hover:-translate-y-1 hover:from-[#15569b] hover:to-[#073a78] hover:shadow-[0_16px_30px_rgb(21_56_96/0.22)]">
       <div className="flex size-20 items-center justify-center text-white">
         <ClassIcon classCode={classCode} />
       </div>
       <h2 className="text-2xl font-bold tracking-tight">{className}</h2>
       <Link
         href={`/teacher?class=${classCode}`}
-        className="mt-auto inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-white/80 bg-[#07366f]/90 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-[#062d5d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
+        className="mt-auto inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-[#07366f]/90 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-[#062d5d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
         aria-label={`${className} 로그인`}
       >
         로그인

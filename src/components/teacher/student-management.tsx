@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AddStudentForm } from "@/components/add-student-form";
+import { StudentRosterImport } from "@/components/student-roster-import";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { DeleteStudentButton } from "@/components/delete-student-button";
 import { DataTable, DataTableShell } from "@/components/ui/data-table";
@@ -36,18 +37,15 @@ export function StudentManagement({
   classCode,
   students,
   totalCount,
-  query,
   status,
   page,
 }: {
   classCode: ClassCode;
   students: Students;
   totalCount: number;
-  query?: string;
   status?: string;
   page?: string;
 }) {
-  const hasQuery = Boolean(query?.trim());
   const activeStatus = resolveStatusFilter(status);
 
   const statusCounts: Record<StatusFilter, number> = { all: students.length, done: 0, in_progress: 0, not_started: 0 };
@@ -67,33 +65,34 @@ export function StudentManagement({
         actions={
           <div className="text-right text-sm text-muted">
             <p>전체 학생 <strong className="text-slate-900">{totalCount}명</strong></p>
-            {hasQuery && <p className="mt-0.5">검색 결과 {students.length}명</p>}
           </div>
         }
       />
 
       <PageSection title="학생 추가" description="추가한 학생은 현재 인증된 학급에만 등록됩니다.">
-        <AddStudentForm classCode={classCode} />
+        <div className="flex flex-col gap-4 rounded-ui border border-dashed border-slate-300 bg-white p-4 lg:flex-row lg:items-end">
+          <AddStudentForm classCode={classCode} />
+          <div className="hidden h-16 w-px bg-line lg:block" aria-hidden="true" />
+          <StudentRosterImport classCode={classCode} />
+        </div>
       </PageSection>
 
       <PageSection
         title="학생 목록"
         description="작성 상태는 지원대학·체크리스트 입력을 기준으로 화면에서 자동 계산하며, 별도 완료 처리 절차는 없습니다."
       >
-        <SearchForm classCode={classCode} query={query} status={activeStatus} />
-        <StatusTabs classCode={classCode} query={query} active={activeStatus} counts={statusCounts} />
+        <StatusTabs classCode={classCode} active={activeStatus} counts={statusCounts} />
         {filtered.length === 0 ? (
           <EmptyState
             className="mt-4"
-            title={hasQuery || activeStatus !== "all" ? "조건에 맞는 학생이 없습니다" : "현재 등록된 학생이 없습니다"}
-            description={hasQuery || activeStatus !== "all" ? "다른 이름·학번으로 검색하거나 상태 필터를 초기화해 주세요." : "위 학생 추가 영역에서 첫 학생을 등록할 수 있습니다."}
-            action={hasQuery ? <ResetSearchLink classCode={classCode} /> : undefined}
+            title={activeStatus !== "all" ? "조건에 맞는 학생이 없습니다" : "현재 등록된 학생이 없습니다"}
+            description={activeStatus !== "all" ? "다른 작성 상태를 선택해 주세요." : "위 학생 추가 영역에서 첫 학생을 등록할 수 있습니다."}
           />
         ) : (
           <>
             <DesktopStudentTable classCode={classCode} students={pageStudents} startIndex={startIndex} />
             <MobileStudentList classCode={classCode} students={pageStudents} />
-            <Pagination classCode={classCode} query={query} status={activeStatus} currentPage={currentPage} totalPages={totalPages} />
+            <Pagination classCode={classCode} status={activeStatus} currentPage={currentPage} totalPages={totalPages} />
           </>
         )}
       </PageSection>
@@ -101,24 +100,7 @@ export function StudentManagement({
   );
 }
 
-function SearchForm({ classCode, query, status }: { classCode: ClassCode; query?: string; status: StatusFilter }) {
-  return (
-    <form action="/teacher" className="mb-4 flex w-full flex-col gap-2 sm:max-w-xl sm:flex-row" role="search">
-      <input type="hidden" name="class" value={classCode} />
-      <input type="hidden" name="view" value="students" />
-      {status !== "all" && <input type="hidden" name="status" value={status} />}
-      <label htmlFor="student-search" className="sr-only">학생 이름 또는 학번 검색</label>
-      <input id="student-search" name="q" defaultValue={query ?? ""} placeholder="이름 또는 학번 검색" className="min-h-11 min-w-0 flex-1 rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-      <div className="flex gap-2">
-        <button type="submit" className="min-h-11 flex-1 rounded-lg border border-navy bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:flex-none">검색</button>
-        {query?.trim() && <ResetSearchLink classCode={classCode} compact />}
-      </div>
-    </form>
-  );
-}
-
-function StatusTabs({ classCode, query, active, counts }: { classCode: ClassCode; query?: string; active: StatusFilter; counts: Record<StatusFilter, number> }) {
-  const queryParam = query?.trim() ? `&q=${encodeURIComponent(query.trim())}` : "";
+function StatusTabs({ classCode, active, counts }: { classCode: ClassCode; active: StatusFilter; counts: Record<StatusFilter, number> }) {
   return (
     <div role="tablist" aria-label="작성 상태 필터" className="mb-4 flex gap-1 overflow-x-auto border-b border-line">
       {STATUS_FILTERS.map((item) => (
@@ -126,7 +108,7 @@ function StatusTabs({ classCode, query, active, counts }: { classCode: ClassCode
           key={item.id}
           role="tab"
           aria-selected={active === item.id}
-          href={`/teacher?class=${classCode}&view=students${item.id === "all" ? "" : `&status=${item.id}`}${queryParam}`}
+          href={`/teacher?class=${classCode}&view=students${item.id === "all" ? "" : `&status=${item.id}`}`}
           className={`min-h-11 shrink-0 border-b-2 px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${active === item.id ? "border-brand text-brand" : "border-transparent text-slate-500 hover:text-slate-700"}`}
         >
           {item.label} ({counts[item.id]})
@@ -180,12 +162,11 @@ function MobileStudentList({ classCode, students }: { classCode: ClassCode; stud
   );
 }
 
-function Pagination({ classCode, query, status, currentPage, totalPages }: { classCode: ClassCode; query?: string; status: StatusFilter; currentPage: number; totalPages: number }) {
+function Pagination({ classCode, status, currentPage, totalPages }: { classCode: ClassCode; status: StatusFilter; currentPage: number; totalPages: number }) {
   if (totalPages <= 1) return null;
   const buildHref = (targetPage: number) => {
-    const queryParam = query?.trim() ? `&q=${encodeURIComponent(query.trim())}` : "";
     const statusParam = status === "all" ? "" : `&status=${status}`;
-    return `/teacher?class=${classCode}&view=students${statusParam}${queryParam}&page=${targetPage}`;
+    return `/teacher?class=${classCode}&view=students${statusParam}&page=${targetPage}`;
   };
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
   return (
@@ -223,8 +204,4 @@ function formatLastModifiedCompact(iso: string | null) {
 
 function DetailLink({ href }: { href: string }) {
   return <Link href={href} className="inline-flex min-h-9 items-center justify-center rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">상세 보기</Link>;
-}
-
-function ResetSearchLink({ classCode, compact = false }: { classCode: ClassCode; compact?: boolean }) {
-  return <Link href={`/teacher?class=${classCode}&view=students`} className={`inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${compact ? "flex-1 sm:flex-none" : ""}`}>검색 초기화</Link>;
 }
