@@ -1,16 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import type { ReactNode } from "react";
-import { AdmissionExcelImport } from "@/components/admission-excel-import";
 import { ChecklistPanel } from "@/components/checklist-panel";
 import { ConsultationApplicationsPanel } from "@/components/consultation";
 import { CopyLinkButton } from "@/components/copy-link-button";
-import { InterestPdfImport } from "@/components/interest-pdf-import";
 import { StudentExportActions } from "@/components/student-export-actions";
 import { StudentDetailTabs } from "@/components/teacher/student-detail-tabs";
 import { TeacherAppShell } from "@/components/teacher/teacher-app-shell";
-import { Card, CardContent } from "@/components/ui/card";
-import { PageContainer, PageHeader, PageSection } from "@/components/ui/page-layout";
+import { PageContainer, PageSection } from "@/components/ui/page-layout";
 import { CLASS_UI_NAME_BY_CODE, isClassCode } from "@/lib/class-codes";
 import { getStudentById, listApplications, listChecklist } from "@/lib/data";
 import { logServerError, logServerEvent } from "@/lib/server-debug";
@@ -43,33 +39,16 @@ export default async function TeacherStudentDetailPage({ params, searchParams }:
     <TeacherAppShell classCode={classCode} view="students" title={`${student.name} 학생 상세`}>
       <PageContainer>
         <Link href={backHref} className="mb-3 inline-flex min-h-9 items-center rounded-lg text-sm font-semibold text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">← 학생 관리로 돌아가기</Link>
-        <PageHeader title={student.name} description={`${className}${student.student_number ? ` · 학번 ${student.student_number}` : " · 학번 미등록"}`} actions={<CopyLinkButton code={student.access_code} />} />
-        <div className="mb-8 grid gap-3 sm:grid-cols-2">
-          <SummaryCard label="지원대학" value={applicationCount > 0 ? `${applicationCount}건` : "미입력"} icon="document" />
-          <SummaryCard label="체크리스트" value={checklist.length > 0 ? `${checklistDone} / ${checklist.length}` : "항목 없음"} icon="checklist" />
-        </div>
-        <PageSection title="문서 내보내기" description="기존 Excel·PDF·인쇄 기능을 사용합니다."><StudentExportActions studentId={student.id} /></PageSection>
-        {classCode === "finance" && <PageSection title="데이터 가져오기" description="기존 금융반 가져오기 기능을 유지합니다."><AdmissionExcelImport /><InterestPdfImport /></PageSection>}
+        <section className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-white px-5 py-5 shadow-card">
+          <div><h1 className="text-2xl font-bold text-navy sm:text-3xl">{student.name}</h1><p className="mt-1 text-sm text-muted">{className}{student.student_number ? ` · 학번 ${student.student_number}` : " · 학번 미등록"}</p></div>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3"><span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-brand">지원대학 {applicationCount}개</span><span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">제출서류 {checklistDone}/{checklist.length}</span><CopyLinkButton code={student.access_code} /></div>
+        </section>
+        <div className="mb-3 flex justify-end"><StudentExportActions studentId={student.id} /></div>
         <StudentDetailTabs
-          applicationsPanel={<ConsultationApplicationsPanel student={student} studentId={student.id} classCode={classCode} className={className} initialApplications={applications} />}
+          applicationsPanel={<ConsultationApplicationsPanel studentId={student.id} initialApplications={applications} />}
           checklistPanel={<PageSection title="제출서류"><ChecklistPanel applications={applications} initialItems={checklist} /></PageSection>}
         />
       </PageContainer>
     </TeacherAppShell>
   );
-}
-
-type SummaryIconName = "document" | "checklist";
-
-function SummaryCard({ label, value, icon }: { label: string; value: string; icon: SummaryIconName }) {
-  return <Card><CardContent className="flex items-center justify-between gap-3 p-4"><div><p className="text-xs font-semibold text-muted">{label}</p><p className="mt-1 text-xl font-bold text-navy">{value}</p></div><span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-subtle text-navy"><SummaryIcon name={icon} /></span></CardContent></Card>;
-}
-
-function SummaryIcon({ name }: { name: SummaryIconName }) {
-  const common = { className: "size-5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, "aria-hidden": true } as const;
-  const icons: Record<SummaryIconName, ReactNode> = {
-    document: <svg {...common}><path d="M6 4h9l3 3v13H6Z" /><path d="M9 10h6M9 13h6M9 16h4" /></svg>,
-    checklist: <svg {...common}><rect x="4" y="4" width="16" height="16" rx="2.5" /><path d="m8 12 2.5 2.5L16 9" /></svg>,
-  };
-  return icons[name];
 }

@@ -13,8 +13,8 @@ export function StudentDetailTabs({ applicationsPanel, checklistPanel }: { appli
   const [tab, setTab] = useState<DetailTab>("applications");
 
   return (
-    <div className="mt-2">
-      <div role="tablist" aria-label="학생 상세 메뉴" className="flex gap-1 overflow-x-auto border-b border-line">
+    <div className="mt-1 min-w-0">
+      <div role="tablist" aria-label="학생 상세 메뉴" className="flex gap-1 overflow-x-auto border-b border-line bg-white px-1">
         {TABS.map((item) => (
           <button
             key={item.id}
