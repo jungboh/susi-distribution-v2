@@ -1,35 +1,24 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Card } from "@/components/ui/card";
 import { CLASS_UI_NAME_BY_CODE, type ClassCode } from "@/lib/class-codes";
-
-const descriptions: Record<ClassCode, string> = {
-  finance: "금융 분야 진학 자료를 관리합니다.",
-  startup: "창업 분야 진학 자료를 관리합니다.",
-  distribution: "유통 분야 진학 자료를 관리합니다.",
-  health: "보건 분야 진학 자료를 관리합니다.",
-};
 
 export function ClassCard({ classCode }: { classCode: ClassCode }) {
   const className = CLASS_UI_NAME_BY_CODE[classCode];
 
   return (
-    <Card className="group flex min-h-64 flex-col p-5 transition-colors duration-150 hover:border-blue-300">
-      <div className="flex size-12 items-center justify-center rounded-xl bg-blue-50 text-navy">
+    <div className="flex flex-col items-center gap-4 rounded-ui bg-navy p-6 text-center text-white shadow-card transition-colors duration-150 hover:bg-slate-800">
+      <div className="flex size-16 items-center justify-center rounded-xl bg-white/10">
         <ClassIcon classCode={classCode} />
       </div>
-      <h2 className="mt-5 text-xl font-bold text-slate-900">{className}</h2>
-      <p className="mt-2 flex-1 text-sm leading-6 text-muted">
-        {descriptions[classCode]}
-      </p>
+      <h2 className="text-lg font-bold">{className}</h2>
       <Link
         href={`/teacher?class=${classCode}`}
-        className="mt-5 inline-flex min-h-10 items-center justify-center rounded-lg border border-navy bg-navy px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-        aria-label={`${className} 관리 시작`}
+        className="mt-auto inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-navy transition-colors duration-150 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
+        aria-label={`${className} 로그인`}
       >
-        관리 시작
+        로그인
       </Link>
-    </Card>
+    </div>
   );
 }
 
@@ -56,7 +45,9 @@ function ClassIcon({ classCode }: { classCode: ClassCode }) {
     ),
     distribution: (
       <svg {...common}>
-        <path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10" />
+        <path d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L21 8H6" />
+        <circle cx="9.5" cy="20" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="17.5" cy="20" r="1.2" fill="currentColor" stroke="none" />
       </svg>
     ),
     health: (

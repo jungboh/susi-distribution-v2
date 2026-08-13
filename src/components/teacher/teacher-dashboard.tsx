@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer, PageHeader, PageSection } from "@/components/ui/page-layout";
 import type { ClassCode } from "@/lib/class-codes";
@@ -27,10 +27,10 @@ export function TeacherDashboard({ classCode, students }: { classCode: ClassCode
       />
       <PageSection>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="전체 학생" value={`${totalStudents}명`} description="현재 인증 학급" />
-          <MetricCard label="지원대학 입력 학생" value={`${participatingStudents}명`} description="대학명이 1개 이상 입력된 학생" />
-          <MetricCard label="지원대학" value={`${applicationCount}건`} description="대학명이 입력된 지원 건수" />
-          <MetricCard label="체크리스트 완료" value={`${checklistRate}%`} description={`${checklistDone} / ${checklistTotal}개 항목`} />
+          <MetricCard label="전체 학생" value={`${totalStudents}명`} description="현재 인증 학급" icon="students" />
+          <MetricCard label="지원대학 입력 학생" value={`${participatingStudents}명`} description="대학명이 1개 이상 입력된 학생" icon="check" />
+          <MetricCard label="지원대학" value={`${applicationCount}건`} description="대학명이 입력된 지원 건수" icon="document" />
+          <MetricCard label="체크리스트 완료" value={`${checklistRate}%`} description={`${checklistDone} / ${checklistTotal}개 항목`} icon="checklist" />
         </div>
       </PageSection>
 
@@ -64,8 +64,32 @@ export function TeacherDashboard({ classCode, students }: { classCode: ClassCode
   );
 }
 
-function MetricCard({ label, value, description }: { label: string; value: string; description: string }) {
-  return <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-slate-600">{label}</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold tracking-tight text-navy">{value}</p><p className="mt-2 text-xs leading-5 text-muted">{description}</p></CardContent></Card>;
+type MetricIconName = "students" | "check" | "document" | "checklist";
+
+function MetricCard({ label, value, description, icon }: { label: string; value: string; description: string; icon: MetricIconName }) {
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-slate-600">{label}</p>
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-subtle text-navy"><MetricIcon name={icon} /></span>
+        </div>
+        <p className="mt-3 text-3xl font-bold tracking-tight text-navy">{value}</p>
+        <p className="mt-2 text-xs leading-5 text-muted">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MetricIcon({ name }: { name: MetricIconName }) {
+  const common = { className: "size-5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, "aria-hidden": true } as const;
+  const icons: Record<MetricIconName, ReactNode> = {
+    students: <svg {...common}><circle cx="12" cy="8" r="3.2" /><path d="M5 19c.7-4 3.2-6 7-6s6.3 2 7 6" /></svg>,
+    check: <svg {...common}><circle cx="12" cy="12" r="8" /><path d="m8.5 12.5 2.5 2.5 4.5-5" /></svg>,
+    document: <svg {...common}><path d="M6 4h9l3 3v13H6Z" /><path d="M9 10h6M9 13h6M9 16h4" /></svg>,
+    checklist: <svg {...common}><rect x="4" y="4" width="16" height="16" rx="2.5" /><path d="m8 12 2.5 2.5L16 9" /></svg>,
+  };
+  return icons[name];
 }
 
 function LinkButton({ href, children }: { href: string; children: ReactNode }) {
