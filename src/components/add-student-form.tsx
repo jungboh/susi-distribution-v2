@@ -21,7 +21,7 @@ export function AddStudentForm({ classCode }: { classCode: ClassCode }) {
     <form
       ref={formRef}
       action={formAction}
-      className="grid gap-3 rounded-ui border border-dashed border-slate-300 bg-white p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
+      className="grid min-w-0 flex-[1.15] gap-3 sm:grid-cols-[minmax(110px,1fr)_minmax(120px,1fr)_auto] sm:items-end"
     >
       <input type="hidden" name="class_code" value={classCode} />
       <div className="flex min-w-0 flex-col gap-1.5">

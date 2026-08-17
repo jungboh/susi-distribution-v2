@@ -5,6 +5,7 @@ import * as data from "@/lib/data";
 import { ApplicationPatch } from "@/lib/types";
 import { readVerifiedTeacherClassSession } from "@/lib/teacher-auth";
 import { DEFAULT_CLASS_CODE, isClassCode } from "@/lib/class-codes";
+import { parseStudentRosterExcel } from "@/lib/student-roster-excel";
 
 const APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
   "region",
@@ -271,6 +272,80 @@ export async function createStudentAction(
 
   await data.createStudent(name, studentNumber, requestedClassCode);
   return { error: "" };
+}
+
+export type StudentRosterImportState = {
+  error: string;
+  added: number;
+  skipped: number;
+  failed: number;
+};
+
+export async function importStudentRosterAction(
+  _prevState: StudentRosterImportState | undefined,
+  formData: FormData
+): Promise<StudentRosterImportState> {
+  const requestedClassCode = String(formData.get("class_code") ?? "");
+  if (!isClassCode(requestedClassCode)) {
+    return { error: "올바른 학급을 선택해 주세요.", added: 0, skipped: 0, failed: 0 };
+  }
+
+  const session = await readVerifiedTeacherClassSession();
+  if (!session || session.classCode !== requestedClassCode) {
+    return { error: "해당 학급의 담임 인증이 필요합니다.", added: 0, skipped: 0, failed: 0 };
+  }
+
+  const file = formData.get("roster_file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Excel 명렬표를 선택해 주세요.", added: 0, skipped: 0, failed: 0 };
+  }
+  if (!file.name.toLowerCase().endsWith(".xlsx") || file.size > 5 * 1024 * 1024) {
+    return { error: "5MB 이하의 .xlsx 파일만 업로드할 수 있습니다.", added: 0, skipped: 0, failed: 0 };
+  }
+
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
+      return { error: "손상되었거나 올바르지 않은 .xlsx 파일입니다.", added: 0, skipped: 0, failed: 0 };
+    }
+    const rows = await parseStudentRosterExcel(Buffer.from(bytes));
+    const existing = await data.listStudents(requestedClassCode);
+    const existingNumbers = new Set(existing.map((student) => student.student_number?.trim()).filter(Boolean));
+    const existingNamesWithoutNumber = new Set(existing.filter((student) => !student.student_number).map((student) => student.name.trim()));
+    const seenNumbers = new Set<string>();
+    const seenNamesWithoutNumber = new Set<string>();
+    let added = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const row of rows) {
+      const duplicate = row.studentNumber
+        ? existingNumbers.has(row.studentNumber) || seenNumbers.has(row.studentNumber)
+        : existingNamesWithoutNumber.has(row.name) || seenNamesWithoutNumber.has(row.name);
+      if (duplicate) {
+        skipped += 1;
+        continue;
+      }
+      try {
+        await data.createStudent(row.name, row.studentNumber, requestedClassCode);
+        added += 1;
+        if (row.studentNumber) seenNumbers.add(row.studentNumber);
+        else seenNamesWithoutNumber.add(row.name);
+      } catch {
+        failed += 1;
+      }
+    }
+
+    revalidatePath(`/teacher?class=${requestedClassCode}&view=students`);
+    return { error: failed ? "일부 학생을 등록하지 못했습니다." : "", added, skipped, failed };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "명렬표를 처리하지 못했습니다.",
+      added: 0,
+      skipped: 0,
+      failed: 0,
+    };
+  }
 }
 
 export async function deleteStudentAction(studentId: string) {
