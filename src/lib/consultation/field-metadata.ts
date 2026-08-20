@@ -21,7 +21,7 @@ export type ConsultationFieldMetadata = {
   format: ConsultationDisplayFormat;
   source: "existing" | "new";
   teacherUi: "edit";
-  studentUi: "inherit-existing" | "read-only";
+  studentUi: "edit" | "read-only" | "hidden";
   emptyDisplay: "dash" | "not-entered";
 };
 
@@ -41,8 +41,21 @@ export const NEW_CONSULTATION_FIELDS = [
   "apply_period_text", "document_submit_period_text", "stage1_announce_text", "interview_schedule_text", "final_announce_text",
 ] as const satisfies readonly (keyof Application)[];
 
-const existing = (field: ConsultationFieldName, label: string, stage: ConsultationStage, section: ConsultationFieldMetadata["section"], format: ConsultationDisplayFormat = "text"): ConsultationFieldMetadata => ({ field, label, stage, section, format, source: "existing", teacherUi: "edit", studentUi: "inherit-existing", emptyDisplay: "not-entered" });
-const added = (field: ConsultationFieldName, label: string, stage: ConsultationStage, section: ConsultationFieldMetadata["section"], format: ConsultationDisplayFormat, emptyDisplay: ConsultationFieldMetadata["emptyDisplay"] = "dash"): ConsultationFieldMetadata => ({ field, label, stage, section, format, source: "new", teacherUi: "edit", studentUi: "read-only", emptyDisplay });
+const STUDENT_EDITABLE_FIELDS = new Set<ConsultationFieldName>([
+  "university_name", "department", "admission_type", "admission_name",
+  "recruit_count", "required_documents", "apply_period_text",
+  "document_submit_period_text", "stage1_announce_text",
+  "interview_schedule_text", "final_announce_text",
+]);
+const STUDENT_READ_ONLY_FIELDS = new Set<ConsultationFieldName>([
+  "establishment_type", "admission_method", "csat_min_grade", "my_grade",
+  "result_2026_cut_50", "result_2026_cut_70",
+  "result_2026_competition_rate", "result_2026_additional_admits",
+]);
+const studentUi = (field: ConsultationFieldName): ConsultationFieldMetadata["studentUi"] =>
+  STUDENT_EDITABLE_FIELDS.has(field) ? "edit" : STUDENT_READ_ONLY_FIELDS.has(field) ? "read-only" : "hidden";
+const existing = (field: ConsultationFieldName, label: string, stage: ConsultationStage, section: ConsultationFieldMetadata["section"], format: ConsultationDisplayFormat = "text"): ConsultationFieldMetadata => ({ field, label, stage, section, format, source: "existing", teacherUi: "edit", studentUi: studentUi(field), emptyDisplay: "not-entered" });
+const added = (field: ConsultationFieldName, label: string, stage: ConsultationStage, section: ConsultationFieldMetadata["section"], format: ConsultationDisplayFormat, emptyDisplay: ConsultationFieldMetadata["emptyDisplay"] = "dash"): ConsultationFieldMetadata => ({ field, label, stage, section, format, source: "new", teacherUi: "edit", studentUi: studentUi(field), emptyDisplay });
 
 export const CONSULTATION_FIELD_METADATA: readonly ConsultationFieldMetadata[] = [
   existing("university_name", "지원대학", "common", "basic"),
