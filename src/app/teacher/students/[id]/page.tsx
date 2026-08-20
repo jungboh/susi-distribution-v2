@@ -45,7 +45,7 @@ export default async function TeacherStudentDetailPage({ params, searchParams }:
         </section>
         <div className="mb-3 flex justify-end"><StudentExportActions studentId={student.id} /></div>
         <StudentDetailTabs
-          applicationsPanel={<ConsultationApplicationsPanel studentId={student.id} initialApplications={applications} />}
+          applicationsPanel={<ConsultationApplicationsPanel studentId={student.id} initialApplications={applications} initialChecklist={checklist} />}
           checklistPanel={<PageSection title="제출서류"><ChecklistPanel applications={applications} initialItems={checklist} /></PageSection>}
         />
       </PageContainer>
