@@ -5,10 +5,10 @@ import { buildStudentUrl } from "@/lib/student-link-url";
 
 export function CopyLinkButton({ code }: { code: string }) {
   const [isFallbackOpen, setIsFallbackOpen] = useState(false);
+  const [url, setUrl] = useState("");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fallbackId = useId();
-  const url = buildStudentUrl(code);
 
   useEffect(() => {
     if (!isFallbackOpen) return;
@@ -27,6 +27,7 @@ export function CopyLinkButton({ code }: { code: string }) {
   }, [isFallbackOpen]);
 
   function openFallback() {
+    setUrl(buildStudentUrl(code, window.location.origin));
     setIsFallbackOpen(true);
   }
 
