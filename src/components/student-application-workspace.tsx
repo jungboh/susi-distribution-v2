@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { addApplicationRowAction, deleteApplicationRowAction, updateApplicationFieldAction } from "@/app/actions";
 import { ChecklistPanel } from "@/components/checklist-panel";
 import { ADMISSION_TYPES, MAX_APPLICATION_ROWS, type Application, type ApplicationPatch, type ChecklistItem } from "@/lib/types";
+import { CONSULTATION_FIELD_METADATA } from "@/lib/consultation/field-metadata";
 
 type Tab = "basic" | "consultation" | "schedule" | "documents";
 type EditableField = keyof ApplicationPatch;
@@ -30,12 +31,30 @@ const SCHEDULE: Config[] = [
   { field: "interview_schedule_text", label: "면접 일정", kind: "textarea" },
   { field: "final_announce_text", label: "최종 발표 일정", kind: "textarea" },
 ];
-const READ_ONLY: { field: keyof Application; label: string }[] = [
-  { field: "admission_method", label: "전형방법" }, { field: "csat_min_grade", label: "수능 최저등급" },
-  { field: "my_grade", label: "학생 성적" }, { field: "result_2026_cut_50", label: "2026 50% 컷" },
-  { field: "result_2026_cut_70", label: "2026 70% 컷" }, { field: "result_2026_competition_rate", label: "2026 경쟁률" },
-  { field: "result_2026_additional_admits", label: "2026 추가합격 인원" },
+type StudentConsultationField =
+  | "admission_method" | "csat_min_grade"
+  | "my_grade" | "prev_avg_grade" | "first_pass_cut" | "cut_70" | "additional_pass_cut"
+  | "result_2026_cut_50" | "result_2026_cut_70"
+  | "result_2026_competition_rate" | "result_2026_additional_admits";
+
+const STUDENT_CONSULTATION_SECTIONS: readonly {
+  title: string;
+  fields: readonly StudentConsultationField[];
+}[] = [
+  { title: "상담 핵심 조건", fields: ["admission_method", "csat_min_grade"] },
+  { title: "학생 성적·상담 참고 입결", fields: ["my_grade", "prev_avg_grade", "first_pass_cut", "cut_70", "additional_pass_cut"] },
+  { title: "2026 최신 입결", fields: ["result_2026_cut_50", "result_2026_cut_70", "result_2026_competition_rate", "result_2026_additional_admits"] },
 ];
+
+const CONSULTATION_LABEL_BY_FIELD = new Map(
+  CONSULTATION_FIELD_METADATA.map((metadata) => [metadata.field, metadata.label]),
+);
+
+function getConsultationLabel(field: StudentConsultationField) {
+  const label = CONSULTATION_LABEL_BY_FIELD.get(field);
+  if (!label) throw new Error(`Missing consultation metadata for ${field}`);
+  return label;
+}
 
 export function StudentApplicationWorkspace({ studentId, studentName, className, studentNumber, accessCode, initialApplications, initialChecklist }: {
   studentId: string; studentName: string; className: string; studentNumber: string | null; accessCode: string;
@@ -99,7 +118,7 @@ export function StudentApplicationWorkspace({ studentId, studentName, className,
       <aside className="min-w-0 rounded-xl border border-line bg-white p-4 shadow-card" aria-label="지원대학 목록"><h2 className="font-bold text-navy">지원대학 목록</h2><div className="mt-3 grid max-h-[520px] gap-2 overflow-y-auto pr-1">{apps.map((app) => <button key={app.id} type="button" aria-pressed={selectedId === app.id} onClick={() => select(app.id)} className={`min-h-16 min-w-0 rounded-lg border px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${selectedId === app.id ? "border-navy bg-navy text-white" : "border-line hover:border-brand hover:bg-blue-50"}`}><span className="block break-words text-sm font-bold">{app.seq}. {app.university_name.trim() || "대학 미입력"}</span><span className={`mt-1 block break-words text-xs ${selectedId === app.id ? "text-blue-100" : "text-muted"}`}>{app.department.trim() || "학과 미입력"}{app.admission_type.trim() ? ` · ${app.admission_type}` : ""}</span></button>)}</div><button type="button" onClick={add} disabled={isMutating || apps.length >= MAX_APPLICATION_ROWS} className="mt-4 min-h-11 w-full rounded-lg border border-brand px-4 text-sm font-bold text-brand hover:bg-blue-50 disabled:opacity-50">+ 지원대학 추가</button>{error && <p role="alert" className="mt-2 text-xs text-red-700">{error}</p>}</aside>
       <section className="min-w-0 overflow-hidden rounded-xl border border-line bg-white shadow-card">{!selected ? <p className="p-8 text-center text-sm text-muted">지원대학을 추가해 주세요.</p> : <><header className="flex flex-wrap items-start justify-between gap-3 border-b border-line p-4 sm:p-5"><div className="min-w-0"><h2 className="break-words text-xl font-bold text-navy">{selected.university_name.trim() || "대학 미입력"}</h2><p className="mt-1 break-words text-sm text-muted">{selected.department.trim() || "학과 미입력"}</p></div><button type="button" onClick={remove} disabled={isMutating} className="min-h-11 rounded-lg border border-line px-4 text-sm font-semibold text-slate-600 hover:border-red-300 hover:text-red-700">삭제</button></header>
         <div role="tablist" aria-label="지원대학 상세 메뉴" className="flex max-w-full gap-1 overflow-x-auto border-b border-line px-2">{TABS.map((item) => <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => setTab(item.id)} className={`min-h-11 shrink-0 border-b-2 px-3 text-sm font-semibold ${tab === item.id ? "border-brand text-brand" : "border-transparent text-muted"}`}>{item.label}</button>)}</div>
-        <div className="min-w-0 p-4 sm:p-5">{tab === "basic" && <div className="grid min-w-0 gap-5 sm:grid-cols-2"><ReadOnly label="설립 구분" value={selected.establishment_type} />{BASIC.map((config) => <Control key={config.field} app={selected} config={config} status={statuses[keyOf(selected.id, config.field)]} onChange={(value) => change(selected.id, config, value)} onBlur={() => flush(selected.id, config.field)} onRetry={() => flush(selected.id, config.field)} />)}</div>}{tab === "consultation" && <div><p className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">담임 선생님이 보완한 상담 정보입니다. 학생 화면에서는 읽기만 가능합니다.</p><div className="grid min-w-0 gap-4 sm:grid-cols-2">{READ_ONLY.map(({ field, label }) => <ReadOnly key={field} label={label} value={selected[field] as string | null} />)}</div></div>}{tab === "schedule" && <div className="grid min-w-0 gap-5 sm:grid-cols-2">{SCHEDULE.map((config) => <Control key={config.field} app={selected} config={config} status={statuses[keyOf(selected.id, config.field)]} onChange={(value) => change(selected.id, config, value)} onBlur={() => flush(selected.id, config.field)} onRetry={() => flush(selected.id, config.field)} />)}</div>}{tab === "documents" && <ChecklistPanel accessCode={accessCode} applications={apps} initialItems={checklist} onItemsChange={setChecklist} />}</div></>}</section>
+        <div className="min-w-0 p-4 sm:p-5">{tab === "basic" && <div className="grid min-w-0 gap-5 sm:grid-cols-2"><ReadOnly label="설립 구분" value={selected.establishment_type} />{BASIC.map((config) => <Control key={config.field} app={selected} config={config} status={statuses[keyOf(selected.id, config.field)]} onChange={(value) => change(selected.id, config, value)} onBlur={() => flush(selected.id, config.field)} onRetry={() => flush(selected.id, config.field)} />)}</div>}{tab === "consultation" && <div><p className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">담임 선생님이 보완한 상담 정보입니다. 학생 화면에서는 읽기만 가능합니다.</p><div className="space-y-6">{STUDENT_CONSULTATION_SECTIONS.map((section) => <section key={section.title} aria-label={section.title}><h3 className="mb-3 text-base font-bold text-navy">{section.title}</h3><div className="grid min-w-0 gap-4 sm:grid-cols-2">{section.fields.map((field) => <ReadOnly key={field} label={getConsultationLabel(field)} value={selected[field]} />)}</div></section>)}</div></div>}{tab === "schedule" && <div className="grid min-w-0 gap-5 sm:grid-cols-2">{SCHEDULE.map((config) => <Control key={config.field} app={selected} config={config} status={statuses[keyOf(selected.id, config.field)]} onChange={(value) => change(selected.id, config, value)} onBlur={() => flush(selected.id, config.field)} onRetry={() => flush(selected.id, config.field)} />)}</div>}{tab === "documents" && <ChecklistPanel accessCode={accessCode} applications={apps} initialItems={checklist} onItemsChange={setChecklist} />}</div></>}</section>
     </div>
   </div>;
 }

@@ -49,6 +49,7 @@ const STUDENT_EDITABLE_FIELDS = new Set<ConsultationFieldName>([
 ]);
 const STUDENT_READ_ONLY_FIELDS = new Set<ConsultationFieldName>([
   "establishment_type", "admission_method", "csat_min_grade", "my_grade",
+  "prev_avg_grade", "first_pass_cut", "cut_70", "additional_pass_cut",
   "result_2026_cut_50", "result_2026_cut_70",
   "result_2026_competition_rate", "result_2026_additional_admits",
 ]);
