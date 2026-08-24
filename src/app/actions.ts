@@ -232,8 +232,12 @@ export async function deleteApplicationRowAction(
   applicationId: string
 ) {
   const ownerId = await authorizeApplication(accessCode, applicationId);
-  await data.deleteApplicationRow(applicationId, ownerId);
+  const remainingApplications = await data.deleteApplicationRow(
+    applicationId,
+    ownerId
+  );
   revalidateMutationPaths(accessCode);
+  return remainingApplications;
 }
 
 export async function addChecklistItemAction(

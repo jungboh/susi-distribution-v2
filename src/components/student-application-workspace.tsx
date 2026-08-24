@@ -110,7 +110,23 @@ export function StudentApplicationWorkspace({ studentId, studentName, className,
   function flushApp(id: string) { for (const [key, timer] of Array.from(timers.current.entries())) if (key.startsWith(`${id}:`)) { clearTimeout(timer); timers.current.delete(key); void save(id, key.slice(id.length + 1) as EditableField); } }
   function select(id: string) { if (selected && selected.id !== id) { const failed = Object.entries(statuses).some(([key, status]) => key.startsWith(`${selected.id}:`) && status.state === "error"); if (failed && !confirm("저장하지 못한 항목이 있습니다. 그래도 이동할까요?")) return; flushApp(selected.id); } setSelectedId(id); }
   function add() { setError(""); startMutation(async () => { try { const row = await addApplicationRowAction(accessCode, studentId); publish([...appsRef.current, row]); setSelectedId(row.id); setTab("basic"); router.refresh(); } catch { setError("지원대학을 추가하지 못했습니다."); } }); }
-  function remove() { if (!selected || !confirm(`${selected.university_name.trim() || "선택한 지원대학"} 정보를 삭제할까요?`)) return; setError(""); startMutation(async () => { try { await deleteApplicationRowAction(accessCode, selected.id); const next = appsRef.current.filter((app) => app.id !== selected.id).map((app, index) => ({ ...app, seq: index + 1 })); publish(next); setChecklist((items) => items.filter((item) => item.application_id !== selected.id)); setSelectedId(next[0]?.id ?? ""); router.refresh(); } catch { setError("지원대학을 삭제하지 못했습니다."); } }); }
+  function remove() {
+    if (!selected || !confirm(`${selected.university_name.trim() || "선택한 지원대학"} 정보를 삭제할까요?`)) return;
+    const deletedId = selected.id;
+    const deletedIndex = appsRef.current.findIndex((app) => app.id === deletedId);
+    setError("");
+    startMutation(async () => {
+      try {
+        const next = await deleteApplicationRowAction(accessCode, deletedId);
+        publish(next);
+        setChecklist((items) => items.filter((item) => item.application_id !== deletedId));
+        setSelectedId(next[Math.min(Math.max(deletedIndex, 0), next.length - 1)]?.id ?? "");
+        router.refresh();
+      } catch {
+        setError("지원대학을 삭제하지 못했습니다.");
+      }
+    });
+  }
 
   return <div className="min-w-0 space-y-4">
     <section className="grid gap-3 rounded-xl border border-line bg-white p-4 shadow-card sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div className="min-w-0"><p className="text-lg font-bold text-navy">{studentName}</p><p className="mt-1 break-words text-sm text-muted">{className} · {studentNumber ? `학번 ${studentNumber}` : "학번 미입력"}</p></div><div className="flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded-full bg-blue-50 px-3 py-2 text-brand">지원대학 {filledCount}개</span><span className="rounded-full bg-amber-50 px-3 py-2 text-amber-800">일정 {scheduleCount}/{apps.length * 5}</span><SaveSummary state={overall} /></div></section>
