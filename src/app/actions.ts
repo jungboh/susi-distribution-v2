@@ -12,6 +12,7 @@ const TEACHER_APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
   "department",
   "admission_type",
   "admission_name",
+  "application_level",
   "admission_method",
   "csat_min_grade",
   "recruit_count",
@@ -106,6 +107,8 @@ const NULLABLE_TEXT_FIELDS = new Set<keyof ApplicationPatch>([
   "final_announce_text",
 ]);
 
+const APPLICATION_LEVEL_VALUES = new Set(["", "하향", "적정", "상향", "우주상향"]);
+
 const AUTHORIZATION_ERROR = "요청을 처리할 권한이 없습니다.";
 
 function denyAccess(): never {
@@ -166,6 +169,30 @@ async function authorizeApplication(
   }
 }
 
+async function authorizeTeacherApplication(
+  studentId: string,
+  applicationId: string
+) {
+  try {
+    const session = await readVerifiedTeacherClassSession();
+    if (!session) denyAccess();
+
+    const student = await data.getStudentById(studentId);
+    if (!student || student.class_code !== session.classCode) denyAccess();
+
+    const application = await data.getApplicationById(applicationId);
+    if (
+      application.id !== applicationId ||
+      application.student_id !== student.id
+    ) {
+      denyAccess();
+    }
+    return student;
+  } catch {
+    denyAccess();
+  }
+}
+
 async function authorizeChecklistItem(accessCode: string | null, itemId: string) {
   try {
     const item = await data.getChecklistOwnership(itemId);
@@ -199,6 +226,9 @@ export async function updateApplicationFieldAction(
   if (!allowedFields.has(field)) {
     throw new Error("허용되지 않은 필드입니다.");
   }
+  if (field === "application_level" && !APPLICATION_LEVEL_VALUES.has(value ?? "")) {
+    throw new Error("올바른 지원 수준을 선택해주세요.");
+  }
   await authorizeApplication(accessCode, applicationId);
   if (value === undefined) {
     return data.getApplicationById(applicationId);
@@ -231,12 +261,27 @@ export async function deleteApplicationRowAction(
   accessCode: string | null,
   applicationId: string
 ) {
+  if (!accessCode) denyAccess();
   const ownerId = await authorizeApplication(accessCode, applicationId);
   const remainingApplications = await data.deleteApplicationRow(
     applicationId,
     ownerId
   );
   revalidateMutationPaths(accessCode);
+  return remainingApplications;
+}
+
+export async function deleteTeacherApplicationRowAction(
+  studentId: string,
+  applicationId: string
+) {
+  const student = await authorizeTeacherApplication(studentId, applicationId);
+  const remainingApplications = await data.deleteApplicationRow(
+    applicationId,
+    student.id
+  );
+  revalidatePath("/teacher");
+  revalidatePath(`/teacher/students/${student.id}`);
   return remainingApplications;
 }
 

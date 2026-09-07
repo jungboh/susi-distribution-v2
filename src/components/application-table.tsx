@@ -171,12 +171,16 @@ export function ApplicationTable({
   }
 
   function handleDeleteRow(id: string) {
+    if (!accessCode) {
+      setError("교사 화면에서는 학생 상세의 삭제 확인창을 이용해 주세요.");
+      return;
+    }
     const target = rowsRef.current.find((row) => row.id === id);
     if (!confirm(`${target?.university_name || `${target?.seq ?? "선택한"}번 행`} 정보를 삭제할까요?`)) return;
     setError(null);
     startTransition(async () => {
       try {
-        await deleteApplicationRowAction(accessCode ?? null, id);
+        await deleteApplicationRowAction(accessCode, id);
         commitRows(
           rowsRef.current
             .filter((row) => row.id !== id)

@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { addApplicationRowAction, deleteApplicationRowAction, updateApplicationFieldAction } from "@/app/actions";
+import { addApplicationRowAction, deleteTeacherApplicationRowAction, updateApplicationFieldAction } from "@/app/actions";
 import { ChecklistPanel } from "@/components/checklist-panel";
-import { ADMISSION_TYPES, MAX_APPLICATION_ROWS, type Application, type ApplicationPatch, type ChecklistItem } from "@/lib/types";
+import { ADMISSION_TYPES, APPLICATION_LEVELS, MAX_APPLICATION_ROWS, type Application, type ApplicationLevel, type ApplicationPatch, type ChecklistItem } from "@/lib/types";
 import {
   CONSULTATION_FIELD_METADATA,
   type ConsultationFieldMetadata,
@@ -17,6 +17,17 @@ type FieldStatus = { state: ConsultationSaveState; message?: string };
 type EditorField = Pick<ConsultationFieldMetadata, "label" | "format"> & { field: EditableField };
 type ConsultationEditableField = ConsultationFieldMetadata["field"] & EditableField;
 const SAVE_DELAY_MS = 700;
+
+const APPLICATION_LEVEL_STYLES: Record<ApplicationLevel, { card: string; badge: string; select: string }> = {
+  "하향": { card: "border-emerald-300 bg-emerald-50 text-emerald-950", badge: "bg-emerald-600 text-white", select: "border-emerald-300 bg-emerald-50 text-emerald-900" },
+  "적정": { card: "border-blue-300 bg-blue-50 text-blue-950", badge: "bg-blue-600 text-white", select: "border-blue-300 bg-blue-50 text-blue-900" },
+  "상향": { card: "border-amber-300 bg-amber-50 text-amber-950", badge: "bg-amber-400 text-amber-950", select: "border-amber-300 bg-amber-50 text-amber-900" },
+  "우주상향": { card: "border-red-300 bg-red-50 text-red-950", badge: "bg-red-600 text-white", select: "border-red-300 bg-red-50 text-red-900" },
+};
+
+function getApplicationLevel(value: string | null | undefined): ApplicationLevel | null {
+  return (APPLICATION_LEVELS as readonly string[]).includes(value) ? value as ApplicationLevel : null;
+}
 
 const FIRST_CONSULTATION_SECTIONS = {
   conditions: ["admission_method", "csat_min_grade"],
@@ -51,8 +62,9 @@ const LEGACY_FIELDS: readonly EditorField[] = [
   { field: "my_score", label: "나의 점수", format: "text" },
 ] as const;
 
-export function ConsultationEditor({ studentId, initialApplications, initialChecklist, onApplicationsChange }: {
+export function ConsultationEditor({ studentId, studentName, initialApplications, initialChecklist, onApplicationsChange }: {
   studentId: string;
+  studentName: string;
   initialApplications: Application[];
   initialChecklist: ChecklistItem[];
   onApplicationsChange?: (applications: Application[]) => void;
@@ -64,6 +76,7 @@ export function ConsultationEditor({ studentId, initialApplications, initialChec
   const [stage, setStage] = useState<ConsultationStage>("common");
   const [statuses, setStatuses] = useState<Record<string, FieldStatus>>({});
   const [mutationError, setMutationError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Application | null>(null);
   const valuesRef = useRef(new Map<string, string>());
   const timersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const inFlightRef = useRef(new Set<string>());
@@ -218,15 +231,23 @@ export function ConsultationEditor({ studentId, initialApplications, initialChec
     });
   }
 
+  function requestDeleteApplication() {
+    if (!selected) return;
+    setMutationError("");
+    setDeleteTarget(selected);
+  }
+
   function deleteApplication() {
-    if (!selected || !window.confirm(`${selected.university_name.trim() || `${selected.seq}번 지원대학`} 정보를 삭제할까요?`)) return;
+    if (!deleteTarget) return;
+    const deletedId = deleteTarget.id;
+    const deletedIndex = applications.findIndex((item) => item.id === deletedId);
     setMutationError("");
     startMutation(async () => {
       try {
-        await deleteApplicationRowAction(null, selected.id);
-        const next = applications.filter((item) => item.id !== selected.id).map((item, index) => ({ ...item, seq: index + 1 }));
+        const next = await deleteTeacherApplicationRowAction(studentId, deletedId);
         publish(next);
-        setSelectedId(next[0]?.id ?? "");
+        setSelectedId(next[Math.min(Math.max(deletedIndex, 0), next.length - 1)]?.id ?? "");
+        setDeleteTarget(null);
         router.refresh();
       } catch { setMutationError("지원대학을 삭제하지 못했습니다."); }
     });
@@ -236,10 +257,14 @@ export function ConsultationEditor({ studentId, initialApplications, initialChec
     <aside className="min-w-0 rounded-xl border border-line bg-white p-4 shadow-card" aria-label="지원대학 목록">
       <h2 className="font-bold text-navy">지원대학 목록</h2>
       <div className="mt-3 grid max-h-[560px] gap-2 overflow-y-auto pr-1">
-        {applications.map((application) => <button key={application.id} type="button" aria-pressed={selectedId === application.id} onClick={() => handleSelectApplication(application.id)} className={`min-h-16 rounded-lg border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${selectedId === application.id ? "border-navy bg-navy text-white shadow-sm" : "border-line bg-white text-slate-700 hover:border-brand hover:bg-blue-50"}`}>
-          <span className="block truncate text-sm font-bold">{application.seq}. {application.university_name.trim() || "대학 미입력"}</span>
-          <span className={`mt-1 block truncate text-xs ${selectedId === application.id ? "text-blue-100" : "text-muted"}`}>{application.department.trim() || "학과 미입력"}{application.admission_type.trim() ? ` · ${application.admission_type}` : ""}</span>
-        </button>)}
+        {applications.map((application) => {
+          const level = getApplicationLevel(application.application_level);
+          const levelStyle = level ? APPLICATION_LEVEL_STYLES[level] : null;
+          return <button key={application.id} type="button" aria-pressed={selectedId === application.id} onClick={() => handleSelectApplication(application.id)} className={`min-h-16 rounded-lg border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${levelStyle?.card ?? "border-line bg-white text-slate-700 hover:border-brand hover:bg-blue-50"} ${selectedId === application.id ? "ring-2 ring-navy ring-offset-1 shadow-sm" : ""}`}>
+            <span className="flex min-w-0 items-center justify-between gap-2"><span className="truncate text-sm font-bold">{application.seq}. {application.university_name.trim() || "대학 미입력"}</span>{level && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${levelStyle?.badge}`}>{level}</span>}</span>
+            <span className="mt-1 block truncate text-xs opacity-75">{application.department.trim() || "학과 미입력"}{application.admission_type.trim() ? ` · ${application.admission_type}` : ""}</span>
+          </button>;
+        })}
       </div>
       <button type="button" onClick={addApplication} disabled={isMutating || applications.length >= MAX_APPLICATION_ROWS} className="mt-4 min-h-11 w-full rounded-lg border border-brand bg-white px-4 text-sm font-bold text-brand hover:bg-blue-50 disabled:opacity-50">+ 지원대학 추가</button>
       {mutationError && <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p>}
@@ -248,8 +273,8 @@ export function ConsultationEditor({ studentId, initialApplications, initialChec
     <section className="min-w-0 overflow-hidden rounded-xl border border-line bg-white shadow-card">
       {!selected ? <div className="p-8 text-center text-sm text-muted">지원대학을 추가하면 상담 정보를 입력할 수 있습니다.</div> : <>
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-5">
-          <div className="min-w-0"><h2 className="truncate text-xl font-bold text-navy sm:text-2xl">{selected.university_name.trim() || "대학 미입력"}{selected.department.trim() ? ` · ${selected.department}` : ""}</h2><p className="mt-1 truncate text-sm text-muted">{selected.admission_type || "전형유형 미입력"}{selected.admission_name ? ` / ${selected.admission_name}` : ""}</p></div>
-          <div className="flex items-center gap-2">{overallState === "idle" || overallState === "saved" ? <p role="status" aria-live="polite" className="text-sm font-semibold text-emerald-700">● 모든 변경사항 저장됨</p> : <ConsultationSaveStatus state={overallState} />}<button type="button" onClick={deleteApplication} disabled={isMutating} className="min-h-10 rounded-lg border border-line px-3 text-sm font-semibold text-slate-600 hover:border-red-300 hover:text-red-700">삭제</button></div>
+          <div className="min-w-0"><h2 className="truncate text-xl font-bold text-navy sm:text-2xl">{selected.university_name.trim() || "대학 미입력"}{selected.department.trim() ? ` · ${selected.department}` : ""}</h2><p className="mt-1 truncate text-sm text-muted">{selected.admission_type || "전형유형 미입력"}{selected.admission_name ? ` / ${selected.admission_name}` : ""}</p><label className="mt-3 flex w-fit items-center gap-2 text-sm font-semibold text-slate-700"><span>지원 수준</span><select aria-label="지원 수준" value={selected.application_level ?? ""} onChange={(event) => handleChange(selected.id, { field: "application_level", label: "지원 수준", format: "select" }, event.target.value)} className={`min-h-9 rounded-lg border px-3 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-brand/20 ${getApplicationLevel(selected.application_level) ? APPLICATION_LEVEL_STYLES[getApplicationLevel(selected.application_level)!].select : "border-line bg-white text-slate-700"}`}><option value="">선택</option>{APPLICATION_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}</select></label></div>
+          <div className="flex items-center gap-2">{overallState === "idle" || overallState === "saved" ? <p role="status" aria-live="polite" className="text-sm font-semibold text-emerald-700">● 모든 변경사항 저장됨</p> : <ConsultationSaveStatus state={overallState} />}<button type="button" onClick={requestDeleteApplication} disabled={isMutating} className="min-h-10 rounded-lg border border-line px-3 text-sm font-semibold text-slate-600 hover:border-red-300 hover:text-red-700">삭제</button></div>
         </header>
         <div className="px-5 pt-2"><ConsultationStageNavigation current={stage} onChange={setStage} /></div>
         <div className="p-5">
@@ -261,6 +286,23 @@ export function ConsultationEditor({ studentId, initialApplications, initialChec
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-subtle/40 px-5 py-4"><p className="text-sm text-muted">☁ 입력 내용은 자동 저장됩니다</p>{stage === "common" && <button type="button" onClick={() => setStage("first_consultation")} className="min-h-11 rounded-lg border border-brand bg-white px-5 text-sm font-bold text-brand hover:bg-blue-50">다음: 1차 상담 →</button>}{stage === "first_consultation" && <button type="button" onClick={() => setStage("second_consultation")} className="min-h-11 rounded-lg border border-brand bg-white px-5 text-sm font-bold text-brand hover:bg-blue-50">다음: 2차 상담 →</button>}{stage === "second_consultation" && <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setStage("first_consultation")} className="min-h-11 rounded-lg px-4 text-sm font-bold text-brand hover:bg-blue-50">← 1차 상담</button><button type="button" onClick={() => setStage("memo")} className="min-h-11 rounded-lg border border-brand bg-white px-5 text-sm font-bold text-brand hover:bg-blue-50">다음: 메모·비고 →</button></div>}</footer>
       </>}
     </section>
+    {deleteTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" role="presentation">
+      <section role="dialog" aria-modal="true" aria-labelledby="delete-application-title" aria-describedby="delete-application-description" className="w-full max-w-md rounded-xl border border-line bg-white p-5 shadow-xl">
+        <h2 id="delete-application-title" className="text-lg font-bold text-navy">지원대학을 삭제할까요?</h2>
+        <p id="delete-application-description" className="mt-2 text-sm text-muted">아래 지원대학 1건만 삭제됩니다. 삭제 후에는 되돌릴 수 없습니다.</p>
+        <dl className="mt-4 grid gap-3 rounded-lg bg-subtle p-4 text-sm">
+          <div><dt className="text-xs font-semibold text-muted">학생</dt><dd className="mt-1 font-semibold text-slate-800">{studentName}</dd></div>
+          <div><dt className="text-xs font-semibold text-muted">지원대학</dt><dd className="mt-1 font-semibold text-slate-800">{deleteTarget.university_name.trim() || "대학 미입력"}</dd></div>
+          <div><dt className="text-xs font-semibold text-muted">모집단위</dt><dd className="mt-1 font-semibold text-slate-800">{deleteTarget.department.trim() || "모집단위 미입력"}</dd></div>
+          <div><dt className="text-xs font-semibold text-muted">전형명</dt><dd className="mt-1 font-semibold text-slate-800">{deleteTarget.admission_name.trim() || "전형명 미입력"}</dd></div>
+        </dl>
+        {mutationError && <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{mutationError}</p>}
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" onClick={() => setDeleteTarget(null)} disabled={isMutating} className="min-h-10 rounded-lg border border-line px-4 text-sm font-semibold text-slate-700 hover:bg-subtle disabled:opacity-50">취소</button>
+          <button type="button" onClick={deleteApplication} disabled={isMutating} className="min-h-10 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">{isMutating ? "삭제 중…" : "삭제"}</button>
+        </div>
+      </section>
+    </div>}
   </div>;
 }
 
@@ -282,7 +324,7 @@ function FirstConsultationWorkspace({ fields, application, statuses, fieldKey, o
 
   return <div className="space-y-7">
     <ConsultationSection number="1" title="상담 핵심 조건">
-      <div className="grid gap-x-7 gap-y-5 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)]">{FIRST_CONSULTATION_SECTIONS.conditions.map(renderField)}</div>
+      <div className="grid max-w-3xl gap-x-5 gap-y-4 sm:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]">{FIRST_CONSULTATION_SECTIONS.conditions.map(renderField)}</div>
     </ConsultationSection>
     <ConsultationSection number="2" title="학생 성적 · 참고 입결">
       <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-5">{FIRST_CONSULTATION_SECTIONS.grades.map(renderField)}</div>
@@ -322,7 +364,7 @@ function SecondConsultationWorkspace({ fields, application, applications, initia
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-brand text-xs font-bold text-brand">{index + 1}</span>
         <h4 className="text-sm font-bold text-navy">{metadata.label}</h4>
       </div>
-      <ConsultationInputField metadata={{ ...metadata, label: `${metadata.label} 입력`, format: "text" }} value={String(application[field] ?? "")} placeholder="일정·시간 입력" status={statuses[fieldKey(application.id, field)] ?? { state: "idle" }} onChange={(value) => onChange(application.id, metadata, value)} onBlur={() => onBlur(application.id, field)} onRetry={() => onRetry(application.id, field)} />
+      <ConsultationInputField metadata={{ ...metadata, label: "날짜" }} value={String(application[field] ?? "")} status={statuses[fieldKey(application.id, field)] ?? { state: "idle" }} onChange={(value) => onChange(application.id, metadata, value)} onBlur={() => onBlur(application.id, field)} onRetry={() => onRetry(application.id, field)} />
     </div>;
   };
 
@@ -333,8 +375,8 @@ function SecondConsultationWorkspace({ fields, application, applications, initia
       {application.required_documents.trim() && <details className="mt-4 rounded-lg border border-line bg-subtle/50"><summary className="cursor-pointer px-4 py-3 text-sm font-bold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">기존 제출서류 메모</summary><p className="whitespace-pre-wrap break-words border-t border-line px-4 py-3 text-sm leading-6 text-slate-700">{application.required_documents}</p></details>}
     </ConsultationSection>
     <ConsultationSection number="2" title="주요 원서 일정">
-      <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">{SECOND_CONSULTATION_FIELDS.schedules.map(renderSchedule)}</div>
-      <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">ⓘ 날짜·기간·시간·추가 설명은 입력한 원문 형식 그대로 저장됩니다.</p>
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-5">{SECOND_CONSULTATION_FIELDS.schedules.map(renderSchedule)}</div>
+      <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-800">ⓘ 각 일정의 날짜를 선택하면 자동으로 저장됩니다.</p>
     </ConsultationSection>
     <details className="rounded-xl border border-line bg-subtle/40"><summary className="cursor-pointer px-4 py-3 text-sm font-bold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">기존 날짜 정보</summary><div className="border-t border-line p-4"><p className="mb-4 text-xs leading-5 text-muted">기존에 저장된 날짜 값을 보존하기 위한 참고 영역입니다. 위 주요 일정과 자동으로 연결되거나 변환되지 않습니다.</p><div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">{LEGACY_DATE_FIELDS.map(renderLegacyDate)}</div></div></details>
   </div>;
@@ -349,5 +391,5 @@ function ConsultationInputField({ metadata, value, placeholder, fullWidth, statu
   const controlClass = "mt-2 min-h-11 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
   const isMultiline = metadata.format === "multiline" || metadata.format === "schedule";
   const options = value && !(ADMISSION_TYPES as readonly string[]).includes(value) ? [value, ...ADMISSION_TYPES] : ADMISSION_TYPES;
-  return <div className={`min-w-0 ${(fullWidth ?? isMultiline) ? "sm:col-span-2" : ""}`}><label htmlFor={id} className="text-sm font-semibold text-slate-700">{metadata.label}</label>{metadata.format === "select" ? <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={controlClass}><option value="">선택</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select> : isMultiline ? <textarea id={id} value={value} rows={metadata.format === "schedule" ? 4 : 3} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={`${controlClass} resize-y whitespace-pre-wrap`} /> : <input id={id} type={metadata.field.toString().endsWith("_date") ? "date" : "text"} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={controlClass} />}<div className="mt-1 flex min-h-8 items-center justify-between gap-2"><ConsultationSaveStatus state={status.state} />{status.state === "error" && <button type="button" onClick={onRetry} className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700">다시 시도</button>}</div>{status.message && <p role="alert" className="text-xs text-red-700">{status.message}</p>}</div>;
+  return <div className={`min-w-0 ${(fullWidth ?? isMultiline) ? "sm:col-span-2" : ""}`}><label htmlFor={id} className="text-sm font-semibold text-slate-700">{metadata.label}</label>{metadata.format === "select" ? <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={controlClass}><option value="">선택</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select> : isMultiline ? <textarea id={id} value={value} rows={metadata.format === "schedule" ? 4 : 3} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={`${controlClass} resize-y whitespace-pre-wrap`} /> : <input id={id} type={metadata.format === "date" || metadata.field.toString().endsWith("_date") ? "date" : "text"} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={controlClass} />}<div className="mt-1 flex min-h-8 items-center justify-between gap-2"><ConsultationSaveStatus state={status.state} />{status.state === "error" && <button type="button" onClick={onRetry} className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700">다시 시도</button>}</div>{status.message && <p role="alert" className="text-xs text-red-700">{status.message}</p>}</div>;
 }

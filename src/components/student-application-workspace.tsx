@@ -11,7 +11,7 @@ type Tab = "basic" | "consultation" | "schedule" | "documents";
 type EditableField = keyof ApplicationPatch;
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
 type Status = { state: SaveState };
-type Config = { field: EditableField; label: string; kind?: "select" | "textarea"; placeholder?: string };
+type Config = { field: EditableField; label: string; kind?: "select" | "textarea" | "date"; placeholder?: string };
 
 const DELAY = 700;
 const TABS: { id: Tab; label: string }[] = [
@@ -25,11 +25,11 @@ const BASIC: Config[] = [
 ];
 const SCHEDULE: Config[] = [
   { field: "required_documents", label: "제출서류", kind: "textarea", placeholder: "필요한 제출서류를 입력해 주세요." },
-  { field: "apply_period_text", label: "원서접수 일정", kind: "textarea" },
-  { field: "document_submit_period_text", label: "서류제출 일정", kind: "textarea" },
-  { field: "stage1_announce_text", label: "1단계 발표 일정", kind: "textarea" },
-  { field: "interview_schedule_text", label: "면접 일정", kind: "textarea" },
-  { field: "final_announce_text", label: "최종 발표 일정", kind: "textarea" },
+  { field: "apply_period_text", label: "원서접수일", kind: "date" },
+  { field: "document_submit_period_text", label: "서류제출일", kind: "date" },
+  { field: "stage1_announce_text", label: "1단계 발표일", kind: "date" },
+  { field: "interview_schedule_text", label: "면접일", kind: "date" },
+  { field: "final_announce_text", label: "최종 발표일", kind: "date" },
 ];
 type StudentConsultationField =
   | "admission_method" | "csat_min_grade"
@@ -141,7 +141,7 @@ export function StudentApplicationWorkspace({ studentId, studentName, className,
 
 function Control({ app, config, status, onChange, onBlur, onRetry }: { app: Application; config: Config; status?: Status; onChange: (value: string) => void; onBlur: () => void; onRetry: () => void }) {
   const value = String(app[config.field] ?? ""); const id = `student-${app.id}-${config.field}`; const cls = "mt-2 min-h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
-  return <div className="min-w-0"><label htmlFor={id} className="text-sm font-semibold text-slate-700">{config.label}</label>{config.kind === "select" ? <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={cls}><option value="">선택</option>{ADMISSION_TYPES.map((option) => <option key={option}>{option}</option>)}</select> : config.kind === "textarea" ? <textarea id={id} value={value} rows={3} placeholder={config.placeholder ?? "일정과 시간을 입력해 주세요."} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={`${cls} resize-y whitespace-pre-wrap`} /> : <input id={id} value={value} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={cls} />}<FieldStatus status={status} onRetry={onRetry} /></div>;
+  return <div className="min-w-0"><label htmlFor={id} className="text-sm font-semibold text-slate-700">{config.label}</label>{config.kind === "select" ? <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className={cls}><option value="">선택</option>{ADMISSION_TYPES.map((option) => <option key={option}>{option}</option>)}</select> : config.kind === "textarea" ? <textarea id={id} value={value} rows={3} placeholder={config.placeholder ?? "내용을 입력해 주세요."} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={`${cls} resize-y whitespace-pre-wrap`} /> : <input id={id} type={config.kind === "date" ? "date" : "text"} value={value} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} className={cls} />}<FieldStatus status={status} onRetry={onRetry} /></div>;
 }
 function ReadOnly({ label, value }: { label: string; value: string | null | undefined }) { return <div className="min-w-0 rounded-lg border border-line bg-subtle/50 p-4"><p className="text-xs font-semibold text-muted">{label}</p><p className="mt-2 whitespace-pre-wrap break-words text-sm font-medium text-slate-800">{value?.trim() || "아직 입력되지 않음"}</p></div>; }
 function FieldStatus({ status, onRetry }: { status?: Status; onRetry: () => void }) { const label = status?.state === "dirty" ? "저장 대기" : status?.state === "saving" ? "저장 중…" : status?.state === "saved" ? "저장됨" : status?.state === "error" ? "저장 실패" : ""; return <div className="mt-1 flex min-h-9 items-center justify-between gap-2"><span role="status" aria-live="polite" className={`text-xs ${status?.state === "error" ? "text-red-700" : "text-muted"}`}>{label}</span>{status?.state === "error" && <button type="button" onClick={onRetry} className="min-h-9 rounded border border-red-300 px-2 text-xs font-semibold text-red-700">다시 시도</button>}</div>; }

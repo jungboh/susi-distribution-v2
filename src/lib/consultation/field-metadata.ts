@@ -11,7 +11,7 @@ export type ConsultationFieldName =
   | "interview_schedule_text" | "final_announce_text";
 
 export type ConsultationStage = "common" | "first_consultation" | "second_consultation" | "memo";
-export type ConsultationDisplayFormat = "text" | "select" | "multiline" | "result" | "schedule";
+export type ConsultationDisplayFormat = "text" | "select" | "multiline" | "result" | "schedule" | "date";
 
 export type ConsultationFieldMetadata = {
   field: ConsultationFieldName;
@@ -65,7 +65,7 @@ export const CONSULTATION_FIELD_METADATA: readonly ConsultationFieldMetadata[] =
   existing("admission_name", "전형명", "common", "basic"),
   existing("recruit_count", "모집인원", "common", "basic"),
   added("establishment_type", "설립 구분", "common", "basic", "text"),
-  existing("admission_method", "전형방법", "first_consultation", "conditions", "multiline"),
+  existing("admission_method", "전형방법", "first_consultation", "conditions"),
   existing("csat_min_grade", "수능 최저등급", "first_consultation", "conditions"),
   existing("my_grade", "나의 내신", "first_consultation", "grade"),
   existing("prev_avg_grade", "전년평균", "first_consultation", "legacy_result"),
@@ -79,11 +79,11 @@ export const CONSULTATION_FIELD_METADATA: readonly ConsultationFieldMetadata[] =
     added(`result_${year}_additional_admits`, `${year} 추가합격 인원`, "first_consultation", "yearly_result", "result"),
   ]),
   existing("required_documents", "제출서류", "second_consultation", "documents", "multiline"),
-  added("apply_period_text", "원서접수 기간", "second_consultation", "schedule", "schedule", "not-entered"),
-  added("document_submit_period_text", "서류 제출 기간", "second_consultation", "schedule", "schedule", "not-entered"),
-  added("stage1_announce_text", "1단계 발표", "second_consultation", "schedule", "schedule", "not-entered"),
-  added("interview_schedule_text", "면접 일정", "second_consultation", "schedule", "schedule", "not-entered"),
-  added("final_announce_text", "최종 발표", "second_consultation", "schedule", "schedule", "not-entered"),
+  added("apply_period_text", "원서접수", "second_consultation", "schedule", "date", "not-entered"),
+  added("document_submit_period_text", "서류 제출", "second_consultation", "schedule", "date", "not-entered"),
+  added("stage1_announce_text", "1단계 발표", "second_consultation", "schedule", "date", "not-entered"),
+  added("interview_schedule_text", "면접", "second_consultation", "schedule", "date", "not-entered"),
+  added("final_announce_text", "최종 발표", "second_consultation", "schedule", "date", "not-entered"),
   existing("note", "비고", "memo", "memo", "multiline"),
   existing("remarks", "추가 비고", "memo", "memo", "multiline"),
 ] as const;

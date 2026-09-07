@@ -189,7 +189,7 @@ export function ChecklistPanel({
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-800">
-          학교별 제출서류 체크리스트
+          {selectedApplicationId ? "제출서류 체크리스트" : "학교별 제출서류 체크리스트"}
         </h2>
         <span className="text-xs text-slate-400">
           {doneCount}/{visibleItems.length} 완료
@@ -251,6 +251,7 @@ export function ChecklistPanel({
             key={app.id}
             title={`${app.seq}. ${app.university_name}`}
             items={groups.get(app.id) ?? []}
+            fullWidth={Boolean(selectedApplicationId)}
             onToggle={handleToggle}
             onNoteChange={handleNoteChange}
             onNoteCommit={handleNoteCommit}
@@ -276,6 +277,7 @@ export function ChecklistPanel({
 function ChecklistGroup({
   title,
   items,
+  fullWidth = false,
   onToggle,
   onNoteChange,
   onNoteCommit,
@@ -283,6 +285,7 @@ function ChecklistGroup({
 }: {
   title: string;
   items: ChecklistItem[];
+  fullWidth?: boolean;
   onToggle: (id: string, checked: boolean) => void;
   onNoteChange: (id: string, note: string) => void;
   onNoteCommit: (id: string, note: string) => void;
@@ -291,7 +294,7 @@ function ChecklistGroup({
   const doneCount = items.filter((i) => i.is_submitted).length;
 
   return (
-    <div className="w-60 shrink-0 rounded-lg border border-slate-100 bg-slate-50/40 p-2.5">
+    <div className={`${fullWidth ? "w-full" : "w-60 shrink-0"} rounded-lg border border-slate-100 bg-slate-50/40 p-2.5`}>
       <div className="mb-1.5 flex items-center justify-between gap-1">
         <h3 className="truncate text-xs font-semibold text-slate-600" title={title}>
           {title}
@@ -304,9 +307,9 @@ function ChecklistGroup({
         {items.map((item) => (
           <li
             key={item.id}
-            className="rounded-lg border border-slate-100 bg-white p-2"
+            className={`rounded-lg border border-slate-100 bg-white p-2 ${fullWidth ? "sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.7fr)] sm:items-center sm:gap-3" : ""}`}
           >
-            <div className="flex items-center justify-between gap-1">
+            <div className="flex min-w-0 items-center justify-between gap-1">
               <label className="flex min-w-0 items-center gap-1.5">
                 <input
                   type="checkbox"
@@ -340,7 +343,7 @@ function ChecklistGroup({
               placeholder="메모 (선택)"
               onChange={(e) => onNoteChange(item.id, e.target.value)}
               onBlur={(e) => onNoteCommit(item.id, e.target.value)}
-              className="mt-1 w-full rounded border-none bg-slate-50 px-2 py-1 text-xs outline-none focus:bg-blue-50"
+              className={`${fullWidth ? "mt-2 sm:mt-0" : "mt-1"} w-full rounded border-none bg-slate-50 px-2 py-1 text-xs outline-none focus:bg-blue-50`}
             />
           </li>
         ))}
