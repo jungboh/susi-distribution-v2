@@ -198,23 +198,28 @@ export async function addApplicationRow(studentId: string) {
 
 export async function deleteApplicationRow(applicationId: string, studentId: string) {
   const supabaseAdmin = getSupabaseAdmin();
-  const { error } = await supabaseAdmin
+  const { data: deleted, error } = await supabaseAdmin
     .from("susi_class2_applications")
     .delete()
-    .eq("id", applicationId);
+    .eq("id", applicationId)
+    .eq("student_id", studentId)
+    .select("id")
+    .maybeSingle();
   if (error) throw error;
+  if (!deleted) throw new Error("지원 정보를 삭제할 수 없습니다.");
 
   const remaining = await listApplications(studentId);
-  await Promise.all(
-    remaining.map((row, index) =>
-      row.seq === index + 1
-        ? Promise.resolve()
-        : supabaseAdmin
-            .from("susi_class2_applications")
-            .update({ seq: index + 1 })
-            .eq("id", row.id)
-    )
-  );
+  for (const [index, row] of remaining.entries()) {
+    if (row.seq === index + 1) continue;
+    const { error: reorderError } = await supabaseAdmin
+      .from("susi_class2_applications")
+      .update({ seq: index + 1 })
+      .eq("id", row.id)
+      .eq("student_id", studentId);
+    if (reorderError) throw reorderError;
+  }
+
+  return listApplications(studentId);
 }
 
 export async function updateApplication(

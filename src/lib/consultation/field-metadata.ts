@@ -11,7 +11,7 @@ export type ConsultationFieldName =
   | "interview_schedule_text" | "final_announce_text";
 
 export type ConsultationStage = "common" | "first_consultation" | "second_consultation" | "memo";
-export type ConsultationDisplayFormat = "text" | "select" | "multiline" | "result" | "schedule";
+export type ConsultationDisplayFormat = "text" | "select" | "multiline" | "result" | "schedule" | "date";
 
 export type ConsultationFieldMetadata = {
   field: ConsultationFieldName;
@@ -21,7 +21,7 @@ export type ConsultationFieldMetadata = {
   format: ConsultationDisplayFormat;
   source: "existing" | "new";
   teacherUi: "edit";
-  studentUi: "inherit-existing" | "read-only";
+  studentUi: "edit" | "read-only" | "hidden";
   emptyDisplay: "dash" | "not-entered";
 };
 
@@ -41,8 +41,22 @@ export const NEW_CONSULTATION_FIELDS = [
   "apply_period_text", "document_submit_period_text", "stage1_announce_text", "interview_schedule_text", "final_announce_text",
 ] as const satisfies readonly (keyof Application)[];
 
-const existing = (field: ConsultationFieldName, label: string, stage: ConsultationStage, section: ConsultationFieldMetadata["section"], format: ConsultationDisplayFormat = "text"): ConsultationFieldMetadata => ({ field, label, stage, section, format, source: "existing", teacherUi: "edit", studentUi: "inherit-existing", emptyDisplay: "not-entered" });
-const added = (field: ConsultationFieldName, label: string, stage: ConsultationStage, section: ConsultationFieldMetadata["section"], format: ConsultationDisplayFormat, emptyDisplay: ConsultationFieldMetadata["emptyDisplay"] = "dash"): ConsultationFieldMetadata => ({ field, label, stage, section, format, source: "new", teacherUi: "edit", studentUi: "read-only", emptyDisplay });
+const STUDENT_EDITABLE_FIELDS = new Set<ConsultationFieldName>([
+  "university_name", "department", "admission_type", "admission_name",
+  "recruit_count", "required_documents", "apply_period_text",
+  "document_submit_period_text", "stage1_announce_text",
+  "interview_schedule_text", "final_announce_text",
+]);
+const STUDENT_READ_ONLY_FIELDS = new Set<ConsultationFieldName>([
+  "establishment_type", "admission_method", "csat_min_grade", "my_grade",
+  "prev_avg_grade", "first_pass_cut", "cut_70", "additional_pass_cut",
+  "result_2026_cut_50", "result_2026_cut_70",
+  "result_2026_competition_rate", "result_2026_additional_admits",
+]);
+const studentUi = (field: ConsultationFieldName): ConsultationFieldMetadata["studentUi"] =>
+  STUDENT_EDITABLE_FIELDS.has(field) ? "edit" : STUDENT_READ_ONLY_FIELDS.has(field) ? "read-only" : "hidden";
+const existing = (field: ConsultationFieldName, label: string, stage: ConsultationStage, section: ConsultationFieldMetadata["section"], format: ConsultationDisplayFormat = "text"): ConsultationFieldMetadata => ({ field, label, stage, section, format, source: "existing", teacherUi: "edit", studentUi: studentUi(field), emptyDisplay: "not-entered" });
+const added = (field: ConsultationFieldName, label: string, stage: ConsultationStage, section: ConsultationFieldMetadata["section"], format: ConsultationDisplayFormat, emptyDisplay: ConsultationFieldMetadata["emptyDisplay"] = "dash"): ConsultationFieldMetadata => ({ field, label, stage, section, format, source: "new", teacherUi: "edit", studentUi: studentUi(field), emptyDisplay });
 
 export const CONSULTATION_FIELD_METADATA: readonly ConsultationFieldMetadata[] = [
   existing("university_name", "지원대학", "common", "basic"),
@@ -51,7 +65,7 @@ export const CONSULTATION_FIELD_METADATA: readonly ConsultationFieldMetadata[] =
   existing("admission_name", "전형명", "common", "basic"),
   existing("recruit_count", "모집인원", "common", "basic"),
   added("establishment_type", "설립 구분", "common", "basic", "text"),
-  existing("admission_method", "전형방법", "first_consultation", "conditions", "multiline"),
+  existing("admission_method", "전형방법", "first_consultation", "conditions"),
   existing("csat_min_grade", "수능 최저등급", "first_consultation", "conditions"),
   existing("my_grade", "나의 내신", "first_consultation", "grade"),
   existing("prev_avg_grade", "전년평균", "first_consultation", "legacy_result"),
@@ -65,11 +79,11 @@ export const CONSULTATION_FIELD_METADATA: readonly ConsultationFieldMetadata[] =
     added(`result_${year}_additional_admits`, `${year} 추가합격 인원`, "first_consultation", "yearly_result", "result"),
   ]),
   existing("required_documents", "제출서류", "second_consultation", "documents", "multiline"),
-  added("apply_period_text", "원서접수 기간", "second_consultation", "schedule", "schedule", "not-entered"),
-  added("document_submit_period_text", "서류 제출 기간", "second_consultation", "schedule", "schedule", "not-entered"),
-  added("stage1_announce_text", "1단계 발표", "second_consultation", "schedule", "schedule", "not-entered"),
-  added("interview_schedule_text", "면접 일정", "second_consultation", "schedule", "schedule", "not-entered"),
-  added("final_announce_text", "최종 발표", "second_consultation", "schedule", "schedule", "not-entered"),
+  added("apply_period_text", "원서접수", "second_consultation", "schedule", "date", "not-entered"),
+  added("document_submit_period_text", "서류 제출", "second_consultation", "schedule", "date", "not-entered"),
+  added("stage1_announce_text", "1단계 발표", "second_consultation", "schedule", "date", "not-entered"),
+  added("interview_schedule_text", "면접", "second_consultation", "schedule", "date", "not-entered"),
+  added("final_announce_text", "최종 발표", "second_consultation", "schedule", "date", "not-entered"),
   existing("note", "비고", "memo", "memo", "multiline"),
   existing("remarks", "추가 비고", "memo", "memo", "multiline"),
 ] as const;

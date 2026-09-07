@@ -17,11 +17,13 @@ export function ChecklistPanel({
   applications,
   initialItems,
   onItemsChange,
+  selectedApplicationId,
 }: {
   accessCode?: string;
   applications: Application[];
   initialItems: ChecklistItem[];
   onItemsChange?: (items: ChecklistItem[]) => void;
+  selectedApplicationId?: string;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -30,7 +32,7 @@ export function ChecklistPanel({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const universities = useMemo(
+  const allUniversities = useMemo(
     () =>
       applications
         .filter((a) => a.university_name.trim())
@@ -38,9 +40,17 @@ export function ChecklistPanel({
     [applications]
   );
 
+  const universities = useMemo(
+    () => selectedApplicationId
+      ? allUniversities.filter((application) => application.id === selectedApplicationId)
+      : allUniversities,
+    [allUniversities, selectedApplicationId]
+  );
+
   const [selectedAppId, setSelectedAppId] = useState(
     universities[0]?.id ?? ""
   );
+  const activeApplicationId = selectedApplicationId ?? selectedAppId;
 
   useEffect(() => {
     itemsRef.current = initialItems;
@@ -48,10 +58,14 @@ export function ChecklistPanel({
   }, [initialItems]);
 
   useEffect(() => {
+    if (selectedApplicationId) {
+      setSelectedAppId(selectedApplicationId);
+      return;
+    }
     if (!universities.some((application) => application.id === selectedAppId)) {
       setSelectedAppId(universities[0]?.id ?? "");
     }
-  }, [selectedAppId, universities]);
+  }, [selectedAppId, selectedApplicationId, universities]);
 
   function commitItems(next: ChecklistItem[]) {
     itemsRef.current = next;
@@ -67,6 +81,9 @@ export function ChecklistPanel({
   const groups = useMemo(() => {
     const map = new Map<string, ChecklistItem[]>();
     for (const item of items) {
+      if (selectedApplicationId && item.application_id !== selectedApplicationId) {
+        continue;
+      }
       const key =
         item.application_id && universityIds.has(item.application_id)
           ? item.application_id
@@ -76,17 +93,17 @@ export function ChecklistPanel({
       map.set(key, list);
     }
     return map;
-  }, [items, universityIds]);
+  }, [items, selectedApplicationId, universityIds]);
 
   function handleAdd() {
     const trimmed = label.trim();
-    if (!trimmed || !selectedAppId) return;
+    if (!trimmed || !activeApplicationId) return;
     setError(null);
     startTransition(async () => {
       try {
         const item = await addChecklistItemAction(
           accessCode ?? null,
-          selectedAppId,
+          activeApplicationId,
           trimmed
         );
         commitItems([...itemsRef.current, item]);
@@ -162,17 +179,20 @@ export function ChecklistPanel({
     });
   }
 
-  const doneCount = items.filter((i) => i.is_submitted).length;
-  const otherItems = groups.get(OTHER_GROUP_KEY) ?? [];
+  const visibleItems = selectedApplicationId
+    ? items.filter((item) => item.application_id === selectedApplicationId)
+    : items;
+  const doneCount = visibleItems.filter((item) => item.is_submitted).length;
+  const otherItems = selectedApplicationId ? [] : groups.get(OTHER_GROUP_KEY) ?? [];
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-800">
-          학교별 제출서류 체크리스트
+          {selectedApplicationId ? "제출서류 체크리스트" : "학교별 제출서류 체크리스트"}
         </h2>
         <span className="text-xs text-slate-400">
-          {doneCount}/{items.length} 완료
+          {doneCount}/{visibleItems.length} 완료
         </span>
       </div>
 
@@ -190,7 +210,7 @@ export function ChecklistPanel({
       )}
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <select
+        {!selectedApplicationId && <select
           value={selectedAppId}
           onChange={(e) => setSelectedAppId(e.target.value)}
           disabled={universities.length === 0}
@@ -202,7 +222,7 @@ export function ChecklistPanel({
               {app.seq}. {app.university_name}
             </option>
           ))}
-        </select>
+        </select>}
         <input
           type="text"
           value={label}
@@ -215,11 +235,14 @@ export function ChecklistPanel({
         <button
           type="button"
           onClick={handleAdd}
-          disabled={isPending || !label.trim() || !selectedAppId}
+          disabled={isPending || !label.trim() || !activeApplicationId}
           className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
         >
           추가
         </button>
+        <span role="status" aria-live="polite" className="self-center text-xs text-slate-500">
+          {isPending ? "저장 중…" : ""}
+        </span>
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-2">
@@ -228,6 +251,7 @@ export function ChecklistPanel({
             key={app.id}
             title={`${app.seq}. ${app.university_name}`}
             items={groups.get(app.id) ?? []}
+            fullWidth={Boolean(selectedApplicationId)}
             onToggle={handleToggle}
             onNoteChange={handleNoteChange}
             onNoteCommit={handleNoteCommit}
@@ -253,6 +277,7 @@ export function ChecklistPanel({
 function ChecklistGroup({
   title,
   items,
+  fullWidth = false,
   onToggle,
   onNoteChange,
   onNoteCommit,
@@ -260,6 +285,7 @@ function ChecklistGroup({
 }: {
   title: string;
   items: ChecklistItem[];
+  fullWidth?: boolean;
   onToggle: (id: string, checked: boolean) => void;
   onNoteChange: (id: string, note: string) => void;
   onNoteCommit: (id: string, note: string) => void;
@@ -268,7 +294,7 @@ function ChecklistGroup({
   const doneCount = items.filter((i) => i.is_submitted).length;
 
   return (
-    <div className="w-60 shrink-0 rounded-lg border border-slate-100 bg-slate-50/40 p-2.5">
+    <div className={`${fullWidth ? "w-full" : "w-60 shrink-0"} rounded-lg border border-slate-100 bg-slate-50/40 p-2.5`}>
       <div className="mb-1.5 flex items-center justify-between gap-1">
         <h3 className="truncate text-xs font-semibold text-slate-600" title={title}>
           {title}
@@ -281,9 +307,9 @@ function ChecklistGroup({
         {items.map((item) => (
           <li
             key={item.id}
-            className="rounded-lg border border-slate-100 bg-white p-2"
+            className={`rounded-lg border border-slate-100 bg-white p-2 ${fullWidth ? "sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.7fr)] sm:items-center sm:gap-3" : ""}`}
           >
-            <div className="flex items-center justify-between gap-1">
+            <div className="flex min-w-0 items-center justify-between gap-1">
               <label className="flex min-w-0 items-center gap-1.5">
                 <input
                   type="checkbox"
@@ -306,7 +332,7 @@ function ChecklistGroup({
                 type="button"
                 onClick={() => onDelete(item.id)}
                 className="shrink-0 text-slate-300 hover:text-red-500"
-                aria-label="삭제"
+                aria-label={`${item.label} 삭제`}
               >
                 ×
               </button>
@@ -317,7 +343,7 @@ function ChecklistGroup({
               placeholder="메모 (선택)"
               onChange={(e) => onNoteChange(item.id, e.target.value)}
               onBlur={(e) => onNoteCommit(item.id, e.target.value)}
-              className="mt-1 w-full rounded border-none bg-slate-50 px-2 py-1 text-xs outline-none focus:bg-blue-50"
+              className={`${fullWidth ? "mt-2 sm:mt-0" : "mt-1"} w-full rounded border-none bg-slate-50 px-2 py-1 text-xs outline-none focus:bg-blue-50`}
             />
           </li>
         ))}

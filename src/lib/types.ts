@@ -18,6 +18,7 @@ export type Application = {
   department: string;
   admission_type: string;
   admission_name: string;
+  application_level: ApplicationLevel | "";
   admission_method: string;
   csat_min_grade: string;
   recruit_count: string;
@@ -100,6 +101,9 @@ export const ADMISSION_TYPES = [
   "실기/실적",
   "기타",
 ] as const;
+
+export const APPLICATION_LEVELS = ["하향", "적정", "상향", "우주상향"] as const;
+export type ApplicationLevel = (typeof APPLICATION_LEVELS)[number];
 
 export const MIN_APPLICATION_ROWS = 6;
 // 금융과는 기존 시스템에서 학생당 최대 50개 지원 행을 허용했다.

@@ -23,6 +23,7 @@ create table if not exists public.susi_class2_applications (
   department text not null default '',
   admission_type text not null default '',
   admission_name text not null default '',
+  application_level text not null default '' check (application_level in ('', '하향', '적정', '상향', '우주상향')),
   admission_method text not null default '',
   csat_min_grade text not null default '',
   recruit_count text not null default '',

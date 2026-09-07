@@ -6,12 +6,13 @@ import { ApplicationPatch } from "@/lib/types";
 import { readVerifiedTeacherClassSession } from "@/lib/teacher-auth";
 import { DEFAULT_CLASS_CODE, isClassCode } from "@/lib/class-codes";
 
-const APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
+const TEACHER_APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
   "region",
   "university_name",
   "department",
   "admission_type",
   "admission_name",
+  "application_level",
   "admission_method",
   "csat_min_grade",
   "recruit_count",
@@ -34,9 +35,6 @@ const APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
   "additional_pass_cut",
   "my_score",
   "remarks",
-]);
-
-const TEACHER_ONLY_APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
   "establishment_type",
   "result_2023_cut_50",
   "result_2023_cut_70",
@@ -61,6 +59,21 @@ const TEACHER_ONLY_APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
   "final_announce_text",
 ]);
 
+const STUDENT_APPLICATION_FIELD_NAMES = new Set<keyof ApplicationPatch>([
+  "region",
+  "university_name",
+  "department",
+  "admission_type",
+  "admission_name",
+  "recruit_count",
+  "required_documents",
+  "apply_period_text",
+  "document_submit_period_text",
+  "stage1_announce_text",
+  "interview_schedule_text",
+  "final_announce_text",
+]);
+
 const NULLABLE_DATE_FIELDS = new Set<keyof ApplicationPatch>([
   "apply_start_date",
   "document_submit_date",
@@ -68,6 +81,33 @@ const NULLABLE_DATE_FIELDS = new Set<keyof ApplicationPatch>([
   "interview_date",
   "final_announce_date",
 ]);
+
+const NULLABLE_TEXT_FIELDS = new Set<keyof ApplicationPatch>([
+  "establishment_type",
+  "result_2023_cut_50",
+  "result_2023_cut_70",
+  "result_2023_competition_rate",
+  "result_2023_additional_admits",
+  "result_2024_cut_50",
+  "result_2024_cut_70",
+  "result_2024_competition_rate",
+  "result_2024_additional_admits",
+  "result_2025_cut_50",
+  "result_2025_cut_70",
+  "result_2025_competition_rate",
+  "result_2025_additional_admits",
+  "result_2026_cut_50",
+  "result_2026_cut_70",
+  "result_2026_competition_rate",
+  "result_2026_additional_admits",
+  "apply_period_text",
+  "document_submit_period_text",
+  "stage1_announce_text",
+  "interview_schedule_text",
+  "final_announce_text",
+]);
+
+const APPLICATION_LEVEL_VALUES = new Set(["", "하향", "적정", "상향", "우주상향"]);
 
 const AUTHORIZATION_ERROR = "요청을 처리할 권한이 없습니다.";
 
@@ -129,6 +169,30 @@ async function authorizeApplication(
   }
 }
 
+async function authorizeTeacherApplication(
+  studentId: string,
+  applicationId: string
+) {
+  try {
+    const session = await readVerifiedTeacherClassSession();
+    if (!session) denyAccess();
+
+    const student = await data.getStudentById(studentId);
+    if (!student || student.class_code !== session.classCode) denyAccess();
+
+    const application = await data.getApplicationById(applicationId);
+    if (
+      application.id !== applicationId ||
+      application.student_id !== student.id
+    ) {
+      denyAccess();
+    }
+    return student;
+  } catch {
+    denyAccess();
+  }
+}
+
 async function authorizeChecklistItem(accessCode: string | null, itemId: string) {
   try {
     const item = await data.getChecklistOwnership(itemId);
@@ -156,19 +220,20 @@ export async function updateApplicationFieldAction(
   field: keyof ApplicationPatch,
   value: string | null | undefined
 ) {
-  const isCommonField = APPLICATION_FIELD_NAMES.has(field);
-  const isTeacherOnlyField = TEACHER_ONLY_APPLICATION_FIELD_NAMES.has(field);
-  if (!isCommonField && !isTeacherOnlyField) {
+  const allowedFields = accessCode
+    ? STUDENT_APPLICATION_FIELD_NAMES
+    : TEACHER_APPLICATION_FIELD_NAMES;
+  if (!allowedFields.has(field)) {
     throw new Error("허용되지 않은 필드입니다.");
   }
-  if (accessCode && isTeacherOnlyField) {
-    throw new Error("허용되지 않은 필드입니다.");
+  if (field === "application_level" && !APPLICATION_LEVEL_VALUES.has(value ?? "")) {
+    throw new Error("올바른 지원 수준을 선택해주세요.");
   }
   await authorizeApplication(accessCode, applicationId);
   if (value === undefined) {
     return data.getApplicationById(applicationId);
   }
-  const normalizedValue = isTeacherOnlyField
+  const normalizedValue = NULLABLE_TEXT_FIELDS.has(field)
     ? value === null || value.trim() === "" ? null : value
     : NULLABLE_DATE_FIELDS.has(field)
       ? value?.trim() || null
@@ -196,9 +261,28 @@ export async function deleteApplicationRowAction(
   accessCode: string | null,
   applicationId: string
 ) {
+  if (!accessCode) denyAccess();
   const ownerId = await authorizeApplication(accessCode, applicationId);
-  await data.deleteApplicationRow(applicationId, ownerId);
+  const remainingApplications = await data.deleteApplicationRow(
+    applicationId,
+    ownerId
+  );
   revalidateMutationPaths(accessCode);
+  return remainingApplications;
+}
+
+export async function deleteTeacherApplicationRowAction(
+  studentId: string,
+  applicationId: string
+) {
+  const student = await authorizeTeacherApplication(studentId, applicationId);
+  const remainingApplications = await data.deleteApplicationRow(
+    applicationId,
+    student.id
+  );
+  revalidatePath("/teacher");
+  revalidatePath(`/teacher/students/${student.id}`);
+  return remainingApplications;
 }
 
 export async function addChecklistItemAction(
