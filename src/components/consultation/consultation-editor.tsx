@@ -26,7 +26,7 @@ const APPLICATION_LEVEL_STYLES: Record<ApplicationLevel, { card: string; badge: 
 };
 
 function getApplicationLevel(value: string | null | undefined): ApplicationLevel | null {
-  return (APPLICATION_LEVELS as readonly string[]).includes(value) ? value as ApplicationLevel : null;
+  return (APPLICATION_LEVELS as readonly string[]).includes(value ?? "") ? value as ApplicationLevel : null;
 }
 
 const FIRST_CONSULTATION_SECTIONS = {
